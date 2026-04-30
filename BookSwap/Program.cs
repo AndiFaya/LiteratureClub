@@ -33,6 +33,9 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 // ── MVC ────────────────────────────────────────────────────────────────────
 builder.Services.AddControllersWithViews();
 
+//registering EmailService
+builder.Services.AddScoped<EmailService>();
+
 // ── Session ────────────────────────────────────────────────────────────────
 builder.Services.AddSession(options =>
 {

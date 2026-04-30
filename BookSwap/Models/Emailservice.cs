@@ -2,6 +2,7 @@
 using SendGrid;
 using SendGrid.Helpers.Mail;
 
+
 namespace BookSwap.Services
 {
     public class EmailService
@@ -9,9 +10,9 @@ namespace BookSwap.Services
         private readonly IConfiguration _config;
         private readonly ILogger<EmailService> _logger;
 
-        private string ApiKey => _config["SendGrid:ApiKey"] ?? "";
+        private string ApiKey => _config["SendGrid:ApiKey"] ?? string.Empty;
         private string SenderEmail => _config["SendGrid:SenderEmail"] ?? "somasharelitclub@gmail.com";
-        private string SenderName => _config["SendGrid:SenderName"] ?? "BookSwap";
+        private string SenderName => _config["SendGrid:SenderName"] ?? "Literature Club";
 
         public EmailService(IConfiguration config, ILogger<EmailService> logger)
         {
@@ -23,7 +24,7 @@ namespace BookSwap.Services
         public async Task<bool> SendEmailVerificationAsync(
             ApplicationUser user, string verificationLink)
         {
-            var subject = "Verify your BookSwap email address";
+            var subject = "Verify your Literature Club account";
 
             var html = $@"
 <!DOCTYPE html>
@@ -78,7 +79,7 @@ namespace BookSwap.Services
 </body>
 </html>";
 
-            var text = $"Welcome to BookSwap, {user.DisplayUsername}!\n\n" +
+            var text = $"Welcome to Literature Club, {user.DisplayUsername}!\n\n" +
                        $"Verify your email by visiting:\n{verificationLink}\n\n" +
                        "This link expires in 24 hours.";
 
@@ -88,7 +89,7 @@ namespace BookSwap.Services
         // ── 2. Payment confirmed — send verification code to buyer ─────────
         public async Task<bool> SendVerificationCodeAsync(Transaction transaction)
         {
-            var subject = $"BookSwap — Your pickup code for \"{transaction.Listing.Title}\"";
+            var subject = $"Literature Club — Your pickup code for \"{transaction.Listing.Title}\"";
 
             var html = $@"
 <!DOCTYPE html>
@@ -166,7 +167,7 @@ namespace BookSwap.Services
         public async Task<bool> SendReceiptEmailAsync(Receipt receipt, Transaction transaction)
         {
             // ── Buyer receipt ──────────────────────────────────────────────
-            var buyerSubject = $"BookSwap Receipt — {receipt.TextbookTitle}";
+            var buyerSubject = $"Literature Club Receipt — {receipt.TextbookTitle}";
             var pickupRow = string.IsNullOrEmpty(receipt.PickupPointName) ? "" :
                 $"<tr><td style='padding:6px 0;color:#6c757d'>Pickup point</td>" +
                 $"<td style='text-align:right'>{receipt.PickupPointName}</td></tr>";
@@ -293,9 +294,12 @@ namespace BookSwap.Services
         private async Task<bool> SendAsync(
             string toEmail, string subject, string htmlBody, string textBody)
         {
+            // Add this temporarily to debug:
+            _logger.LogWarning("=== SENDGRID DEBUG === ApiKey: '{Key}' | To: {To}",
+                string.IsNullOrEmpty(ApiKey) ? "EMPTY" : ApiKey[..10] + "...", toEmail);
+
             // Guard: unconfigured API key
-            if (string.IsNullOrWhiteSpace(ApiKey) ||
-                ApiKey == "YOUR_SENDGRID_API_KEY_HERE")
+            if (string.IsNullOrWhiteSpace(ApiKey))
             {
                 _logger.LogWarning(
                     "SendGrid API key not configured. Email NOT sent → {To} | {Subject}",
