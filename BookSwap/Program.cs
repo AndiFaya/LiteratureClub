@@ -3,7 +3,6 @@ using BookSwap.Models;
 using BookSwap.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Org.BouncyCastle.Crypto.Macs;
 
 var builder = WebApplication.CreateBuilder(args);
 

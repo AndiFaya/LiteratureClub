@@ -16,7 +16,6 @@ namespace BookSwap.Controllers
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly ApplicationDbContext _context;
         private readonly EmailService _email;
-        private readonly IWebHostEnvironment _env;
         private readonly ILogger<AccountController> _logger;
 
         public AccountController(
@@ -24,14 +23,12 @@ namespace BookSwap.Controllers
             SignInManager<ApplicationUser> signInManager,
             ApplicationDbContext context,
             EmailService email,
-            IWebHostEnvironment env,
             ILogger<AccountController> logger)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _context = context;
             _email = email;
-            _env = env;
             _logger = logger;
         }
 
@@ -42,7 +39,10 @@ namespace BookSwap.Controllers
             if (_signInManager.IsSignedIn(User))
                 return RedirectToAction("Index", "Home");
 
-            return View(new RegisterViewModel { Campuses = await GetCampusOptionsAsync() });
+            return View(new RegisterViewModel
+            {
+                Campuses = await GetCampusOptionsAsync()
+            });
         }
 
         // ── POST /Account/Register ─────────────────────────────────────────
@@ -50,6 +50,7 @@ namespace BookSwap.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel vm)
         {
+            // Extra format validation
             if (!string.IsNullOrWhiteSpace(vm.DisplayUsername) &&
                 !Regex.IsMatch(vm.DisplayUsername, @"^[a-zA-Z0-9_]{3,30}$"))
                 ModelState.AddModelError(nameof(vm.DisplayUsername),
@@ -68,6 +69,7 @@ namespace BookSwap.Controllers
 
             try
             {
+                // Uniqueness checks
                 if (await _userManager.FindByEmailAsync(vm.Email.Trim()) != null)
                     ModelState.AddModelError(nameof(vm.Email),
                         "An account with this email already exists.");
@@ -86,7 +88,8 @@ namespace BookSwap.Controllers
                 var campus = await _context.Campuses
                     .FirstOrDefaultAsync(c => c.Id == vm.CampusId && c.IsActive);
                 if (campus == null)
-                    ModelState.AddModelError(nameof(vm.CampusId), "Please select a valid campus.");
+                    ModelState.AddModelError(nameof(vm.CampusId),
+                        "Please select a valid campus.");
 
                 if (!ModelState.IsValid)
                 {
@@ -94,6 +97,7 @@ namespace BookSwap.Controllers
                     return View(vm);
                 }
 
+                // Create user — email NOT confirmed yet
                 var user = new ApplicationUser
                 {
                     FirstName = vm.FirstName.Trim(),
@@ -109,67 +113,61 @@ namespace BookSwap.Controllers
                 };
 
                 var result = await _userManager.CreateAsync(user, vm.Password);
-                _logger.LogInformation("CreateAsync for {Email}: {Succeeded}. Errors: {Errors}",
+                _logger.LogInformation(
+                    "CreateAsync for {Email}: {Ok}. Errors: {Errs}",
                     user.Email, result.Succeeded,
                     string.Join("; ", result.Errors.Select(e => e.Description)));
 
                 if (!result.Succeeded)
                 {
-                    foreach (var error in result.Errors)
-                        ModelState.AddModelError(string.Empty, error.Description);
+                    foreach (var e in result.Errors)
+                        ModelState.AddModelError(string.Empty, e.Description);
                     vm.Campuses = await GetCampusOptionsAsync();
                     return View(vm);
                 }
 
                 await _userManager.AddToRoleAsync(user, "Student");
 
-                // Generate email confirmation token
+                // Generate token and build the verification link
                 var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                 var confirmLink = Url.Action(
                     "ConfirmEmail", "Account",
                     new { userId = user.Id, token },
                     Request.Scheme)!;
 
-                // ── Development mode: auto-confirm + log the link ──────────
-                // No Gmail setup needed during development.
-                if (_env.IsDevelopment())
-                {
-                    _logger.LogWarning(
-                        "=== DEV MODE: EMAIL VERIFICATION LINK ===\n{Link}\n=========================================",
-                        confirmLink);
+                _logger.LogInformation(
+                    "Verification link for {Email}: {Link}", user.Email, confirmLink);
 
-                    // Auto-confirm so the developer can log straight in
-                    await _userManager.ConfirmEmailAsync(user, token);
-                    await _signInManager.SignInAsync(user, isPersistent: false);
-                    TempData["Success"] = $"Welcome, {user.DisplayUsername}! " +
-                        "(Dev mode: email auto-confirmed. Check Output window for the verification link.)";
-                    return RedirectToAction("Index", "Home");
+                // Send via SendGrid
+                var sent = await _email.SendEmailVerificationAsync(user, confirmLink);
+
+                if (sent)
+                {
+                    // Normal path: redirect to "check your inbox" page
+                    return RedirectToAction("VerificationSent",
+                        new { email = user.Email });
                 }
 
-                // ── Production: send real verification email ───────────────
-                var emailSent = await _email.SendEmailVerificationAsync(user, confirmLink);
-                if (!emailSent)
-                {
-                    // Email failed — auto-confirm so user isn't locked out,
-                    // and log the link so admin can manually share it.
-                    _logger.LogError(
-                        "Verification email FAILED for {Email}. Manual link:\n{Link}",
-                        user.Email, confirmLink);
+                // Fallback: SendGrid not yet configured — auto-confirm so
+                // the user isn't locked out during development/testing.
+                // The link is still logged above for admin reference.
+                _logger.LogWarning(
+                    "SendGrid not configured or send failed. " +
+                    "Auto-confirming {Email} so they can sign in.", user.Email);
 
-                    await _userManager.ConfirmEmailAsync(user, token);
-                    await _signInManager.SignInAsync(user, isPersistent: false);
-                    TempData["Success"] = $"Welcome, {user.DisplayUsername}! " +
-                        "Your account is active. (Email delivery failed — please contact support if needed.)";
-                    return RedirectToAction("Index", "Home");
-                }
-
-                return RedirectToAction("VerificationSent", new { email = user.Email });
+                await _userManager.ConfirmEmailAsync(user, token);
+                await _signInManager.SignInAsync(user, isPersistent: false);
+                TempData["Success"] =
+                    $"Welcome, {user.DisplayUsername}! " +
+                    "Your account is active. " +
+                    "(Verification email could not be sent — please configure SendGrid.)";
+                return RedirectToAction("Index", "Home");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Registration failed for {Email}", vm.Email);
                 ModelState.AddModelError(string.Empty,
-                    "A system error occurred. Please ensure the database is running and try again.");
+                    "A system error occurred. Please try again.");
             }
 
             vm.Campuses = await GetCampusOptionsAsync();
@@ -181,35 +179,6 @@ namespace BookSwap.Controllers
         public IActionResult VerificationSent(string email)
         {
             ViewBag.Email = email;
-            return View();
-        }
-
-        // ── GET /Account/ResendVerification ───────────────────────────────
-        [HttpGet]
-        public IActionResult ResendVerification() => View();
-
-        // ── POST /Account/ResendVerification ──────────────────────────────
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ResendVerification(string email)
-        {
-            // Always show success to prevent email enumeration
-            ViewBag.Sent = true;
-
-            var user = await _userManager.FindByEmailAsync(email?.Trim() ?? "");
-            if (user == null || user.EmailConfirmed)
-                return View();
-
-            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            var confirmLink = Url.Action(
-                "ConfirmEmail", "Account",
-                new { userId = user.Id, token },
-                Request.Scheme)!;
-
-            _logger.LogInformation("Resend verification link for {Email}:\n{Link}",
-                user.Email, confirmLink);
-
-            await _email.SendEmailVerificationAsync(user, confirmLink);
             return View();
         }
 
@@ -233,13 +202,47 @@ namespace BookSwap.Controllers
 
             if (result.Succeeded)
             {
+                // Sign in immediately after verifying
                 await _signInManager.SignInAsync(user, isPersistent: false);
-                TempData["Success"] = $"Welcome to BookSwap, {user.DisplayUsername}! Your email is verified.";
+                TempData["Success"] =
+                    $"Welcome to BookSwap, {user.DisplayUsername}! " +
+                    "Your email is verified and you're now signed in.";
                 return RedirectToAction("Index", "Home");
             }
 
-            ViewBag.Error = "The verification link is invalid or has expired. Please request a new one below.";
+            ViewBag.Error =
+                "This verification link is invalid or has expired. " +
+                "Please request a new one below.";
             return View("ConfirmEmailResult");
+        }
+
+        // ── GET /Account/ResendVerification ───────────────────────────────
+        [HttpGet]
+        public IActionResult ResendVerification() => View();
+
+        // ── POST /Account/ResendVerification ──────────────────────────────
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResendVerification(string email)
+        {
+            ViewBag.Sent = true; // always show success to prevent email enumeration
+
+            var user = await _userManager.FindByEmailAsync(email?.Trim() ?? "");
+            if (user != null && !user.EmailConfirmed)
+            {
+                var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                var confirmLink = Url.Action(
+                    "ConfirmEmail", "Account",
+                    new { userId = user.Id, token },
+                    Request.Scheme)!;
+
+                _logger.LogInformation(
+                    "Resend verification for {Email}: {Link}", user.Email, confirmLink);
+
+                await _email.SendEmailVerificationAsync(user, confirmLink);
+            }
+
+            return View();
         }
 
         // ── GET /Account/Login ─────────────────────────────────────────────
@@ -266,6 +269,7 @@ namespace BookSwap.Controllers
             try
             {
                 var user = await _userManager.FindByEmailAsync(vm.Email.Trim());
+
                 if (user == null)
                 {
                     ModelState.AddModelError(string.Empty, "Invalid email or password.");
@@ -281,9 +285,9 @@ namespace BookSwap.Controllers
 
                 if (!user.EmailConfirmed)
                 {
-                    // Let them know and offer a resend link
                     ModelState.AddModelError(string.Empty,
-                        "Please verify your email before signing in.");
+                        "Please verify your email before signing in. " +
+                        "Check your inbox for the verification link.");
                     ViewData["UnverifiedEmail"] = user.Email;
                     return View(vm);
                 }
@@ -293,7 +297,7 @@ namespace BookSwap.Controllers
 
                 if (result.Succeeded)
                 {
-                    _logger.LogInformation("User {Email} logged in.", vm.Email);
+                    _logger.LogInformation("User {Email} signed in.", vm.Email);
                     if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                         return Redirect(returnUrl);
                     return RedirectToAction("Index", "Home");
@@ -302,7 +306,8 @@ namespace BookSwap.Controllers
                 if (result.IsLockedOut)
                 {
                     ModelState.AddModelError(string.Empty,
-                        "Account locked after too many failed attempts. Try again in 5 minutes.");
+                        "Account locked after too many failed attempts. " +
+                        "Try again in 5 minutes.");
                     return View(vm);
                 }
 
@@ -310,8 +315,9 @@ namespace BookSwap.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Login failed for {Email}", vm.Email);
-                ModelState.AddModelError(string.Empty, "A system error occurred. Please try again.");
+                _logger.LogError(ex, "Login error for {Email}", vm.Email);
+                ModelState.AddModelError(string.Empty,
+                    "A system error occurred. Please try again.");
             }
 
             return View(vm);
@@ -338,7 +344,8 @@ namespace BookSwap.Controllers
             {
                 return await _context.Campuses
                     .Where(c => c.IsActive)
-                    .OrderBy(c => c.University).ThenBy(c => c.Name)
+                    .OrderBy(c => c.University)
+                    .ThenBy(c => c.Name)
                     .Select(c => new CampusOption
                     {
                         Id = c.Id,
