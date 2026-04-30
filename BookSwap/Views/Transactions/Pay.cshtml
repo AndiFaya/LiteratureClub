@@ -27,13 +27,14 @@
                 </div>
                 <hr />
                 <p class="text-muted small mb-0">
-                    You will be redirected to PayFast's secure payment page to complete your payment.
-                    You will receive a verification code by email once payment is confirmed.
+                    Click <strong>Proceed to Payment</strong> below to complete your
+                    purchase securely via PayFast. You will receive a verification
+                    code by email once payment is confirmed.
                 </p>
             </div>
         </div>
 
-        <div class="card shadow-sm border-0 bg-light mb-3 p-3 d-flex flex-row align-items-center gap-3">
+        <div class="card shadow-sm border-0 bg-light mb-4 p-3 d-flex flex-row align-items-center gap-3">
             <span style="font-size:28px">🔒</span>
             <div>
                 <div class="fw-semibold small">Secure payment via PayFast</div>
@@ -43,31 +44,68 @@
             </div>
         </div>
 
-        @* Auto-submit form to PayFast sandbox *@
-        <form id="payfast-form" action="@ViewBag.PayFastUrl" method="POST">
+        @* Hidden PayFast form — submitted by the button below *@
+        <form id="payfast-form"
+              action="@ViewBag.PayFastUrl"
+              method="POST">
             @foreach (var field in paymentData ?? new Dictionary<string, string>())
             {
                 <input type="hidden" name="@field.Key" value="@field.Value" />
             }
-            <button type="submit" id="pay-btn" class="btn btn-success w-100 py-2 fw-semibold">
-                Proceed to Payment — R @transaction?.Amount.ToString("N2")
-            </button>
         </form>
 
+        @* Visible button — submits the hidden form above *@
+        <button type="button"
+                id="pay-btn"
+                class="btn btn-success w-100 py-2 fw-semibold"
+                onclick="submitPayment()">
+            Proceed to Payment — R @transaction?.Amount.ToString("N2")
+        </button>
+
         <div class="text-center mt-3">
-            <a asp-controller="Listings" asp-action="Detail"
-               asp-route-id="@transaction?.ListingId"
-               class="text-muted small">Cancel and go back</a>
+            <a asp-controller="Listings"
+                   asp-action="Detail"
+                   asp-route-id="@transaction?.ListingId"
+                   class="text-muted small">
+                Cancel and go back
+            </a>
         </div>
+
+        @* Debug panel — shows in development so you can verify fields *@
+        @if (System.Diagnostics.Debugger.IsAttached)
+        {
+            <div class="card mt-4 border-warning">
+                <div class="card-header bg-warning text-dark small fw-bold">
+                    Dev — PayFast fields being submitted
+                </div>
+                <div class="card-body p-2">
+                    <table class="table table-sm mb-0" style="font-size:11px">
+                        @foreach (var field in paymentData ?? new Dictionary<string, string>())
+                        {
+                            <tr>
+                                <td class="text-muted">@field.Key</td>
+                                <td class="fw-semibold" style="word-break:break-all">@field.Value</td>
+                            </tr>
+                        }
+                    </table>
+                </div>
+            </div>
+        }
+
     </div>
 </div>
 
 @section Scripts {
     <script>
-        // Disable the button after click to prevent double-submission
-        document.getElementById('pay-btn').addEventListener('click', function () {
-            this.disabled = true;
-            this.textContent = 'Redirecting to PayFast…';
-        });
+        function submitPayment() {
+            var btn = document.getElementById('pay-btn');
+            btn.disabled = true;
+            btn.textContent = 'Redirecting to PayFast…';
+
+            // Small delay so the UI update is visible, then submit
+            setTimeout(function () {
+                document.getElementById('payfast-form').submit();
+            }, 300);
+        }
     </script>
 }
