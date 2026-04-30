@@ -1,0 +1,219 @@
+@model BookSwap.ViewModels.ListingDetailViewModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Browse Books</a></li>
+        <li class="breadcrumb-item active">@Model.Title</li>
+    </ol>
+</nav>
+
+<div class="row g-4">
+
+    <!-- ── Left: image + seller card ───────────────────────────────────── -->
+    <div class="col-md-4 col-lg-3">
+        @if (!string.IsNullOrEmpty(Model.ImagePath))
+        {
+            <img src="@Model.ImagePath" class="img-fluid rounded mb-3 w-100"
+                 style="max-height:280px;object-fit:cover;" alt="@Model.Title" />
+        }
+        else
+        {
+            <div class="bg-light rounded d-flex align-items-center justify-content-center mb-3"
+                 style="height:220px;font-size:64px;">📚</div>
+        }
+
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <h6 class="card-title mb-1">@Model.SellerUsername</h6>
+                <p class="text-muted small mb-1">@Model.SellerCampus</p>
+                @if (Model.SellerReviewCount > 0)
+                {
+                    <p class="small mb-2">
+                        @for (int i = 1; i <= 5; i++)
+                        {
+                            <span style="color:@(i <= Math.Round(Model.SellerRating) ? "#d97706" : "#ccc")">★</span>
+                        }
+                        <span class="text-muted">@Model.SellerRating.ToString("N1") (@Model.SellerReviewCount reviews)</span>
+                    </p>
+                }
+                else
+                {
+                    <p class="text-muted small mb-2">No reviews yet</p>
+                }
+
+                @if (!Model.IsOwnListing && Model.Status == BookSwap.Models.ListingStatus.Available)
+                {
+                    <form asp-controller="Transactions" asp-action="Initiate"
+                          method="post" class="mb-2">
+                        <input type="hidden" name="listingId" value="@Model.Id" />
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-primary w-100">
+                            Buy Now — R @Model.Price.ToString("N2")
+                        </button>
+                    </form>
+
+                    <form asp-action="ToggleWatchlist" asp-route-id="@Model.Id"
+                          method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-outline-secondary w-100">
+                            @(Model.IsWatchlisted ? "♥ Saved" : "♡ Save to Watchlist")
+                        </button>
+                    </form>
+                }
+
+                @if (Model.IsOwnListing)
+                {
+                    <a asp-action="Edit" asp-route-id="@Model.Id"
+                       class="btn btn-outline-primary w-100 mb-2">Edit Listing</a>
+                    <form asp-action="Delete" asp-route-id="@Model.Id" method="post"
+                          onsubmit="return confirm('Remove this listing?')">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-outline-danger w-100 btn-sm">
+                            Remove Listing
+                        </button>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Right: book info + bids ─────────────────────────────────────── -->
+    <div class="col-md-8 col-lg-9">
+        <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+            <span class="badge @(Model.Condition == BookSwap.Models.BookCondition.New ? "bg-success" : "bg-warning text-dark")">
+                @Model.Condition
+            </span>
+            <span class="badge bg-secondary">@Model.Format</span>
+            @if (Model.IsOpenForBidding)
+            {
+                <span class="badge bg-info text-dark">
+                    Bids open · expires @Model.BidExpiresAt?.ToString("dd MMM yyyy")
+                </span>
+            }
+            @if (Model.Status != BookSwap.Models.ListingStatus.Available)
+            {
+                <span class="badge bg-danger">@Model.Status</span>
+            }
+            <span class="text-muted small ms-auto">Listed @Model.CreatedAt.ToString("dd MMM yyyy")</span>
+        </div>
+
+        <h2 class="mb-1">@Model.Title</h2>
+        <p class="text-muted mb-3">@Model.Author @(!string.IsNullOrEmpty(Model.Edition) ? $"· {Model.Edition} edition" : "")</p>
+        <p class="fs-4 fw-semibold mb-3">R @Model.Price.ToString("N2")</p>
+
+        <div class="row g-2 mb-3">
+            <div class="col-6 col-md-3">
+                <div class="bg-light rounded p-2">
+                    <div class="text-muted" style="font-size:11px">ISBN</div>
+                    <div style="font-size:13px">@Model.ISBN</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="bg-light rounded p-2">
+                    <div class="text-muted" style="font-size:11px">Publisher</div>
+                    <div style="font-size:13px">@Model.Publisher</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="bg-light rounded p-2">
+                    <div class="text-muted" style="font-size:11px">Year</div>
+                    <div style="font-size:13px">@Model.PublicationYear</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="bg-light rounded p-2">
+                    <div class="text-muted" style="font-size:11px">Course</div>
+                    <div style="font-size:13px">@Model.CourseCode</div>
+                </div>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.ConditionDescription))
+        {
+            <div class="alert alert-warning py-2">
+                <strong>Condition notes:</strong> @Model.ConditionDescription
+            </div>
+        }
+
+        @if (Model.Bids.Any())
+        {
+            <hr />
+            <h5 class="mb-3">Bids (@Model.Bids.Count)</h5>
+            @foreach (var bid in Model.Bids)
+            {
+                <div class="card mb-2">
+                    <div class="card-body py-2 px-3 d-flex align-items-center gap-3 flex-wrap">
+                        <div class="flex-grow-1">
+                            <span class="fw-semibold">@bid.BidderUsername</span>
+                            <span class="text-muted small"> · qty @bid.Quantity</span>
+                            @if (!string.IsNullOrEmpty(bid.Message))
+                            {
+                                <p class="text-muted small mb-0">"@bid.Message"</p>
+                            }
+                        </div>
+                        <div class="fw-semibold">R @bid.OfferAmount.ToString("N2")</div>
+                        <span class="badge @(bid.Status == BookSwap.Models.BidStatus.Pending ? "bg-warning text-dark" : bid.Status == BookSwap.Models.BidStatus.Accepted ? "bg-success" : "bg-secondary")">
+                            @bid.Status
+                        </span>
+                        @if (Model.IsOwnListing && bid.Status == BookSwap.Models.BidStatus.Pending)
+                        {
+                            <form asp-controller="Bids" asp-action="Accept"
+                                  method="post" class="d-inline">
+                                <input type="hidden" name="bidId" value="@bid.Id" />
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-success btn-sm">Accept</button>
+                            </form>
+                            <form asp-controller="Bids" asp-action="Reject"
+                                  method="post" class="d-inline">
+                                <input type="hidden" name="bidId" value="@bid.Id" />
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-outline-secondary btn-sm">Reject</button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            }
+        }
+
+        @if (!Model.IsOwnListing && Model.IsOpenForBidding &&
+             Model.Status == BookSwap.Models.ListingStatus.Available &&
+             User.Identity?.IsAuthenticated == true)
+        {
+            <hr />
+            <h5 class="mb-3">Place a Bid</h5>
+            <form asp-controller="Bids" asp-action="Place" method="post" class="row g-2">
+                <input type="hidden" name="listingId" value="@Model.Id" />
+                @Html.AntiForgeryToken()
+                <div class="col-md-3">
+                    <label class="form-label small">Offer (R)</label>
+                    <input type="number" name="offerAmount" step="0.01" min="1"
+                           class="form-control form-control-sm" placeholder="e.g. 340.00" required />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Quantity</label>
+                    <input type="number" name="quantity" min="1" value="1"
+                           class="form-control form-control-sm" />
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label small">Message (optional)</label>
+                    <input type="text" name="message" class="form-control form-control-sm"
+                           placeholder="Any note to the seller…" maxlength="500" />
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary btn-sm w-100">Submit Bid</button>
+                </div>
+            </form>
+        }
+    </div>
+</div>

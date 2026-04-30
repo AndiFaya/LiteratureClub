@@ -1,0 +1,43 @@
+@{
+    ViewData["Title"] = "Resend Verification Email";
+}
+
+<div class="row justify-content-center mt-5">
+<div class="col-md-5">
+
+    @if (ViewBag.Sent == true)
+    {
+        <div class="text-center">
+            <div style="font-size:56px" class="mb-3">📬</div>
+            <h2 class="mb-2">Email Sent</h2>
+            <p class="text-muted mb-4">
+                If that email address has an unverified account, a new verification
+                link has been sent. Please check your inbox and spam folder.
+            </p>
+            <a asp-action="Login" class="btn btn-primary">Back to Sign In</a>
+        </div>
+    }
+    else
+    {
+        <h2 class="mb-1">Resend Verification Email</h2>
+        <p class="text-muted mb-4">
+            Enter your registered email address and we'll send you a new verification link.
+        </p>
+
+        <form asp-action="ResendVerification" method="post">
+            @Html.AntiForgeryToken()
+            <div class="mb-3">
+                <label class="form-label">Email Address</label>
+                <input type="email" name="email" class="form-control"
+                       placeholder="you@university.ac.za" required autofocus />
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Send Verification Link</button>
+        </form>
+
+        <div class="text-center mt-3">
+            <a asp-action="Login" class="text-muted small">Back to Sign In</a>
+        </div>
+    }
+
+</div>
+</div>

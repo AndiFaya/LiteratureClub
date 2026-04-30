@@ -1,0 +1,29 @@
+@{
+    ViewData["Title"] = "Check Your Email";
+}
+
+<div class="row justify-content-center mt-5">
+<div class="col-md-6 text-center">
+
+    <div style="font-size:64px" class="mb-3">📬</div>
+    <h2 class="mb-2">Check your email</h2>
+    <p class="text-muted mb-4">
+        We've sent a verification link to <strong>@ViewBag.Email</strong>.
+        Click the link in the email to activate your account and start using BookSwap.
+    </p>
+
+    <div class="card border-0 bg-light p-4 mb-4 text-start">
+        <h6 class="mb-3">Didn't receive the email?</h6>
+        <ul class="text-muted small mb-0">
+            <li>Check your <strong>spam or junk</strong> folder</li>
+            <li>Make sure you entered the correct email address</li>
+            <li>Allow a few minutes for it to arrive</li>
+        </ul>
+    </div>
+
+    <a asp-action="Login" asp-controller="Account" class="btn btn-outline-primary">
+        Back to Sign In
+    </a>
+
+</div>
+</div>

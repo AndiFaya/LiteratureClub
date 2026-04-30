@@ -1,0 +1,204 @@
+@model BookSwap.ViewModels.ListingFormViewModel
+@{
+    ViewData["Title"] = "Edit Listing";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+
+        <h2 class="mb-1">Edit Listing</h2>
+        <p class="text-muted mb-3">Changes will be visible to buyers immediately.</p>
+
+        <div class="alert alert-warning py-2 mb-4">
+            <small>You are editing an active listing. Buyers may be watching this listing.</small>
+        </div>
+
+        <form asp-action="Edit" asp-route-id="@Model.Id"
+              method="post" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+            <h5 class="mb-3 border-bottom pb-2">Book Details</h5>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-8">
+                    <label asp-for="ISBN" class="form-label"></label>
+                    <input asp-for="ISBN" class="form-control" />
+                    <span asp-validation-for="ISBN" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="PublicationYear" class="form-label"></label>
+                    <input asp-for="PublicationYear" class="form-control" />
+                    <span asp-validation-for="PublicationYear" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Title" class="form-label"></label>
+                <input asp-for="Title" class="form-control" />
+                <span asp-validation-for="Title" class="text-danger small"></span>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label asp-for="Author" class="form-label"></label>
+                    <input asp-for="Author" class="form-control" />
+                    <span asp-validation-for="Author" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Publisher" class="form-label"></label>
+                    <input asp-for="Publisher" class="form-control" />
+                    <span asp-validation-for="Publisher" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label asp-for="Edition" class="form-label"></label>
+                    <input asp-for="Edition" class="form-control" />
+                    <span asp-validation-for="Edition" class="text-danger small"></span>
+                </div>
+                <div class="col-md-8">
+                    <label asp-for="Format" class="form-label"></label>
+                    <select asp-for="Format" class="form-select"
+                            asp-items="Html.GetEnumSelectList<BookSwap.Models.BookFormat>()"></select>
+                    <span asp-validation-for="Format" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <h5 class="mb-3 border-bottom pb-2">Listing Details</h5>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label asp-for="CategoryId" class="form-label"></label>
+                    <select asp-for="CategoryId" class="form-select">
+                        <option value="">-- Select category --</option>
+                        @foreach (var c in Model.Categories)
+                        {
+                            <option value="@c.Id" selected="@(Model.CategoryId == c.Id)">@c.Label</option>
+                        }
+                    </select>
+                    <span asp-validation-for="CategoryId" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="CourseCodeId" class="form-label"></label>
+                    <select asp-for="CourseCodeId" class="form-select">
+                        <option value="">-- Select course --</option>
+                        @foreach (var c in Model.CourseCodes)
+                        {
+                            <option value="@c.Id" selected="@(Model.CourseCodeId == c.Id)">@c.Label</option>
+                        }
+                    </select>
+                    <span asp-validation-for="CourseCodeId" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label asp-for="Condition" class="form-label"></label>
+                    <select asp-for="Condition" class="form-select" id="conditionSelect"
+                            asp-items="Html.GetEnumSelectList<BookSwap.Models.BookCondition>()"></select>
+                    <span asp-validation-for="Condition" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Price" class="form-label"></label>
+                    <div class="input-group">
+                        <span class="input-group-text">R</span>
+                        <input asp-for="Price" class="form-control" step="0.01" />
+                    </div>
+                    <span asp-validation-for="Price" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="mb-3" id="conditionDescGroup">
+                <label asp-for="ConditionDescription" class="form-label">
+                    Condition Description <span class="text-danger">*</span>
+                </label>
+                <textarea asp-for="ConditionDescription" class="form-control" rows="3"
+                          placeholder="Describe highlights, notes, torn pages, wear…"></textarea>
+                <span asp-validation-for="ConditionDescription" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Current Image</label>
+                @if (!string.IsNullOrEmpty(Model.ExistingImagePath))
+                {
+                    <div class="d-flex align-items-center gap-3 mb-2">
+                        <img src="@Model.ExistingImagePath" alt="Current cover"
+                             style="height:60px;width:48px;object-fit:cover;border-radius:4px;" />
+                        <span class="text-muted small">Current cover image</span>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted small mb-2">No image uploaded.</p>
+                }
+                <label asp-for="ImageFile" class="form-label">
+                    Replace Image <span class="text-muted">(leave blank to keep current)</span>
+                </label>
+                <input asp-for="ImageFile" type="file" class="form-control"
+                       accept="image/jpeg,image/png,image/webp" />
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="form-check mb-2">
+                        <input asp-for="IsOpenForBidding" class="form-check-input" id="biddingCheck" />
+                        <label asp-for="IsOpenForBidding" class="form-check-label fw-semibold">
+                            Open for Bidding
+                        </label>
+                    </div>
+                    <div id="bidExpiryGroup">
+                        <label asp-for="BidExpiresAt" class="form-label"></label>
+                        <input asp-for="BidExpiresAt" type="datetime-local" class="form-control" />
+                        <span asp-validation-for="BidExpiresAt" class="text-danger small"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-3 align-items-center mb-4">
+                <button type="submit" class="btn btn-primary flex-grow-1">Save Changes</button>
+                <a asp-action="Detail" asp-route-id="@Model.Id"
+                   class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+
+        <hr />
+        <div class="card border-danger">
+            <div class="card-body">
+                <h6 class="text-danger mb-1">Remove Listing</h6>
+                <p class="text-muted small mb-3">
+                    This will hide your listing from all buyers. This action cannot be undone.
+                </p>
+                <form asp-action="Delete" asp-route-id="@Model.Id" method="post"
+                      onsubmit="return confirm('Are you sure you want to remove this listing?')">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger btn-sm">Remove Listing</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        const conditionSelect = document.getElementById('conditionSelect');
+        const conditionDescGroup = document.getElementById('conditionDescGroup');
+        const biddingCheck = document.getElementById('biddingCheck');
+        const bidExpiryGroup = document.getElementById('bidExpiryGroup');
+
+        function toggleCondition() {
+            conditionDescGroup.style.display =
+                conditionSelect.value === '1' ? 'block' : 'none';
+        }
+        function toggleBidding() {
+            bidExpiryGroup.style.display =
+                biddingCheck.checked ? 'block' : 'none';
+        }
+
+        conditionSelect.addEventListener('change', toggleCondition);
+        biddingCheck.addEventListener('change', toggleBidding);
+        toggleCondition();
+        toggleBidding();
+    </script>
+}

@@ -1,0 +1,171 @@
+@model BookSwap.ViewModels.RegisterViewModel
+@{
+    ViewData["Title"] = "Create Account";
+}
+
+<div class="row justify-content-center mt-4">
+<div class="col-lg-6 col-md-8">
+
+<h2 class="mb-1">Create an Account</h2>
+<p class="text-muted mb-4">Join BookSwap to buy and sell university textbooks.</p>
+
+@* System / global errors shown prominently *@
+@if (!ViewData.ModelState.IsValid &&
+     ViewData.ModelState.ContainsKey(string.Empty) &&
+     ViewData.ModelState[string.Empty]!.Errors.Any())
+{
+    <div class="alert alert-danger" role="alert">
+        <strong>Registration failed:</strong>
+        <ul class="mb-0 mt-1">
+            @foreach (var error in ViewData.ModelState[string.Empty]!.Errors)
+            {
+                <li>@error.ErrorMessage</li>
+            }
+        </ul>
+    </div>
+}
+
+@* Campus dropdown empty = DB not seeded yet *@
+@if (!Model.Campuses.Any())
+{
+    <div class="alert alert-warning" role="alert">
+        <strong>Setup required:</strong> No campuses are loaded yet.
+        The database may still be initialising — please wait a moment and refresh the page.
+    </div>
+}
+
+<form asp-action="Register" method="post" novalidate>
+    @Html.AntiForgeryToken()
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-6">
+            <label asp-for="FirstName" class="form-label">First Name <span class="text-danger">*</span></label>
+            <input asp-for="FirstName" class="form-control @(ViewData.ModelState[nameof(Model.FirstName)]?.Errors.Any() == true ? "is-invalid" : "")"
+                   placeholder="e.g. Jane" autocomplete="given-name" />
+            <span asp-validation-for="FirstName" class="invalid-feedback d-block"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="LastName" class="form-label">Last Name <span class="text-danger">*</span></label>
+            <input asp-for="LastName" class="form-control @(ViewData.ModelState[nameof(Model.LastName)]?.Errors.Any() == true ? "is-invalid" : "")"
+                   placeholder="e.g. Doe" autocomplete="family-name" />
+            <span asp-validation-for="LastName" class="invalid-feedback d-block"></span>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="DisplayUsername" class="form-label">Username <span class="text-danger">*</span></label>
+        <input asp-for="DisplayUsername" class="form-control @(ViewData.ModelState[nameof(Model.DisplayUsername)]?.Errors.Any() == true ? "is-invalid" : "")"
+               placeholder="e.g. janedoe99" autocomplete="username" />
+        <div class="form-text">3–30 characters. Letters, numbers and underscores only.</div>
+        <span asp-validation-for="DisplayUsername" class="invalid-feedback d-block"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="StudentNumber" class="form-label">Student Number <span class="text-danger">*</span></label>
+        <input asp-for="StudentNumber" class="form-control @(ViewData.ModelState[nameof(Model.StudentNumber)]?.Errors.Any() == true ? "is-invalid" : "")"
+               placeholder="e.g. 220012345" inputmode="numeric" />
+        <span asp-validation-for="StudentNumber" class="invalid-feedback d-block"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Email" class="form-label">University Email <span class="text-danger">*</span></label>
+        <input asp-for="Email" class="form-control @(ViewData.ModelState[nameof(Model.Email)]?.Errors.Any() == true ? "is-invalid" : "")"
+               placeholder="you@university.ac.za" type="email" autocomplete="email" />
+        <span asp-validation-for="Email" class="invalid-feedback d-block"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="City" class="form-label">City <span class="text-danger">*</span></label>
+        <input asp-for="City" class="form-control @(ViewData.ModelState[nameof(Model.City)]?.Errors.Any() == true ? "is-invalid" : "")"
+               placeholder="e.g. Durban" autocomplete="address-level2" />
+        <span asp-validation-for="City" class="invalid-feedback d-block"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="CampusId" class="form-label">Campus <span class="text-danger">*</span></label>
+        <select asp-for="CampusId" class="form-select @(ViewData.ModelState[nameof(Model.CampusId)]?.Errors.Any() == true ? "is-invalid" : "")">
+            <option value="">-- Select your campus --</option>
+            @foreach (var campus in Model.Campuses)
+            {
+                <option value="@campus.Id">@campus.DisplayName</option>
+            }
+        </select>
+        <span asp-validation-for="CampusId" class="invalid-feedback d-block"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Password" class="form-label">Password <span class="text-danger">*</span></label>
+        <div class="input-group">
+            <input asp-for="Password" type="password" id="passwordInput"
+                   class="form-control @(ViewData.ModelState[nameof(Model.Password)]?.Errors.Any() == true ? "is-invalid" : "")"
+                   placeholder="Min 8 chars" autocomplete="new-password" />
+            <button type="button" class="btn btn-outline-secondary" id="togglePassword" tabindex="-1">
+                Show
+            </button>
+        </div>
+        <div class="form-text">Min 8 characters. Must include uppercase, lowercase, number and symbol.</div>
+        <span asp-validation-for="Password" class="invalid-feedback d-block"></span>
+
+        @* Live password strength bar *@
+        <div class="mt-2">
+            <div class="progress" style="height:4px">
+                <div id="strengthBar" class="progress-bar" role="progressbar" style="width:0%"></div>
+            </div>
+            <small id="strengthLabel" class="text-muted"></small>
+        </div>
+    </div>
+
+    <div class="mb-4">
+        <label asp-for="ConfirmPassword" class="form-label">Confirm Password <span class="text-danger">*</span></label>
+        <input asp-for="ConfirmPassword" type="password"
+               class="form-control @(ViewData.ModelState[nameof(Model.ConfirmPassword)]?.Errors.Any() == true ? "is-invalid" : "")"
+               placeholder="Re-enter your password" autocomplete="new-password" />
+        <span asp-validation-for="ConfirmPassword" class="invalid-feedback d-block"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+        Create Account
+    </button>
+</form>
+
+<hr class="my-4" />
+<p class="text-center text-muted">
+    Already have an account?
+    <a asp-action="Login" asp-controller="Account">Sign in here</a>
+</p>
+
+</div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+    // Show/hide password toggle
+    document.getElementById('togglePassword').addEventListener('click', function () {
+        const input = document.getElementById('passwordInput');
+        const isText = input.type === 'text';
+        input.type = isText ? 'password' : 'text';
+        this.textContent = isText ? 'Show' : 'Hide';
+    });
+
+    // Live password strength indicator
+    document.getElementById('passwordInput').addEventListener('input', function () {
+        const val = this.value;
+        let score = 0;
+        if (val.length >= 8)  score++;
+        if (/[A-Z]/.test(val)) score++;
+        if (/[0-9]/.test(val)) score++;
+        if (/[^A-Za-z0-9]/.test(val)) score++;
+        if (val.length >= 12)  score++;
+
+        const bar   = document.getElementById('strengthBar');
+        const label = document.getElementById('strengthLabel');
+        const pct   = (score / 5) * 100;
+
+        bar.style.width = pct + '%';
+        if (score <= 1)      { bar.className = 'progress-bar bg-danger';  label.textContent = 'Weak'; }
+        else if (score <= 3) { bar.className = 'progress-bar bg-warning'; label.textContent = 'Fair'; }
+        else                 { bar.className = 'progress-bar bg-success'; label.textContent = 'Strong'; }
+    });
+    </script>
+}

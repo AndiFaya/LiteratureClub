@@ -1,0 +1,166 @@
+﻿@model List<BookSwap.ViewModels.ListingCardViewModel>
+@{
+    ViewData["Title"] = "Home";
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- ── Hero ───────────────────────────────────────────────────────────── -->
+<div class="py-5 text-center mb-4 rounded-3"
+     style="background:linear-gradient(135deg,#0d6efd11,#0d6efd22);">
+    <div style="font-size:52px" class="mb-2">📚</div>
+    <h1 class="display-6 fw-bold mb-2">Buy &amp; Sell University Textbooks</h1>
+    <p class="lead text-muted mb-4">
+        Save money by buying from fellow students.<br />
+        Earn money by selling books you no longer need.
+    </p>
+    <div class="d-flex justify-content-center gap-3 flex-wrap">
+        <a asp-controller="Listings" asp-action="Index"
+           class="btn btn-primary btn-lg px-4">Browse Books</a>
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <a asp-controller="Listings" asp-action="Create"
+               class="btn btn-outline-primary btn-lg px-4">Sell a Book</a>
+        }
+        else
+        {
+            <a asp-controller="Account" asp-action="Register"
+               class="btn btn-outline-primary btn-lg px-4">Get Started — It's Free</a>
+        }
+    </div>
+</div>
+
+<!-- ── Stats strip ────────────────────────────────────────────────────── -->
+<div class="row g-3 text-center mb-5">
+    <div class="col-4">
+        <div class="fw-bold fs-4 text-primary">@ViewBag.TotalListings</div>
+        <div class="text-muted small">Active listings</div>
+    </div>
+    <div class="col-4">
+        <div class="fw-bold fs-4 text-primary">@ViewBag.TotalUsers</div>
+        <div class="text-muted small">Students registered</div>
+    </div>
+    <div class="col-4">
+        <div class="fw-bold fs-4 text-primary">0%</div>
+        <div class="text-muted small">Platform fee</div>
+    </div>
+</div>
+
+<!-- ── How it works ───────────────────────────────────────────────────── -->
+<div class="row g-3 mb-5 text-center">
+    <div class="col-md-4">
+        <div class="card h-100 border-0 bg-light">
+            <div class="card-body">
+                <div style="font-size:32px" class="mb-2">🔍</div>
+                <h6 class="fw-bold">Browse Listings</h6>
+                <p class="text-muted small mb-0">
+                    Search by title, author, ISBN, course code or category.
+                    Filter by condition and price.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 border-0 bg-light">
+            <div class="card-body">
+                <div style="font-size:32px" class="mb-2">💳</div>
+                <h6 class="fw-bold">Pay Securely</h6>
+                <p class="text-muted small mb-0">
+                    Payments go through PayFast — your details are never stored.
+                    Funds are held until you confirm the exchange.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 border-0 bg-light">
+            <div class="card-body">
+                <div style="font-size:32px" class="mb-2">🤝</div>
+                <h6 class="fw-bold">Exchange on Campus</h6>
+                <p class="text-muted small mb-0">
+                    Meet at a safe campus pickup point.
+                    The seller enters your verification code to complete the sale.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Recent listings ────────────────────────────────────────────────── -->
+@if (Model.Any())
+{
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Recently Listed</h5>
+        <a asp-controller="Listings" asp-action="Index"
+           class="btn btn-sm btn-outline-primary">View all →</a>
+    </div>
+
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3 mb-5">
+        @foreach (var listing in Model)
+        {
+            <div class="col">
+                <a asp-controller="Listings" asp-action="Detail"
+                       asp-route-id="@listing.Id"
+                       class="text-decoration-none text-dark">
+                    <div class="card h-100 shadow-sm">
+                        @if (!string.IsNullOrEmpty(listing.ImagePath))
+                        {
+                            <img src="@listing.ImagePath" class="card-img-top"
+                                 style="height:130px;object-fit:cover;" alt="@listing.Title" />
+                        }
+                        else
+                        {
+                            <div class="bg-light d-flex align-items-center justify-content-center"
+                                 style="height:130px;font-size:38px">
+                                📖
+                            </div>
+                        }
+                        <div class="card-body p-3">
+                            <div class="d-flex gap-1 mb-2 flex-wrap">
+                                <span class="badge @(listing.Condition == BookSwap.Models.BookCondition.New ? "bg-success" : "bg-warning text-dark")"
+                                      style="font-size:10px">
+                                    @listing.Condition
+                                </span>
+                                @if (listing.IsOpenForBidding)
+                                {
+                                    <span class="badge bg-info text-dark" style="font-size:10px">
+                                        Bids open
+                                    </span>
+                                }
+                            </div>
+                            <h6 class="card-title mb-1" style="font-size:13px;line-height:1.3">
+                                @listing.Title
+                            </h6>
+                            <p class="text-muted mb-1" style="font-size:11px">@listing.Author</p>
+                            <p class="fw-semibold mb-0" style="font-size:15px">
+                                R @listing.Price.ToString("N2")
+                            </p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="text-center py-5 text-muted">
+        <p class="fs-5">No listings yet — be the first to sell!</p>
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <a asp-controller="Listings" asp-action="Create"
+               class="btn btn-primary">Post a Listing</a>
+        }
+        else
+        {
+            <a asp-controller="Account" asp-action="Register"
+               class="btn btn-primary">Register to Sell</a>
+        }
+    </div>
+}
