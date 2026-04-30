@@ -1,0 +1,271 @@
+@model LiteratureClub.Models.Transaction
+@{
+    ViewData["Title"] = "Transaction";
+    var isBuyer = (bool)ViewBag.IsBuyer;
+
+    var statusColor = Model.Status switch
+    {
+        LiteratureClub.Models.TransactionStatus.Completed        => "success",
+        LiteratureClub.Models.TransactionStatus.PaymentConfirmed => "info",
+        LiteratureClub.Models.TransactionStatus.AwaitingPickup   => "warning",
+        LiteratureClub.Models.TransactionStatus.Disputed         => "danger",
+        LiteratureClub.Models.TransactionStatus.Refunded         => "secondary",
+        _                                                   => "warning"
+    };
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Info"] != null)
+{
+    <div class="alert alert-info alert-dismissible fade show">
+        @TempData["Info"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a asp-controller="Dashboard" asp-action="Index">Dashboard</a>
+        </li>
+        <li class="breadcrumb-item active">Transaction #@Model.Id</li>
+    </ol>
+</nav>
+
+<div class="row g-4">
+
+    <!-- ── Left: Status + book details ───────────────────────────────── -->
+    <div class="col-md-7">
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h5 class="mb-0">Transaction #@Model.Id</h5>
+                    <span class="badge bg-@statusColor fs-6">@Model.Status</span>
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <div class="bg-light rounded p-2">
+                            <div class="text-muted" style="font-size:11px">Book</div>
+                            <div class="fw-semibold small">@Model.Listing.Title</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="bg-light rounded p-2">
+                            <div class="text-muted" style="font-size:11px">Amount</div>
+                            <div class="fw-bold text-success">R @Model.Amount.ToString("N2")</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="bg-light rounded p-2">
+                            <div class="text-muted" style="font-size:11px">Buyer</div>
+                            <div class="small">@Model.Buyer.DisplayUsername</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="bg-light rounded p-2">
+                            <div class="text-muted" style="font-size:11px">Seller</div>
+                            <div class="small">@Model.Seller.DisplayUsername</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="bg-light rounded p-2">
+                            <div class="text-muted" style="font-size:11px">Date</div>
+                            <div class="small">@Model.CreatedAt.ToString("dd MMM yyyy HH:mm")</div>
+                        </div>
+                    </div>
+                    @if (Model.PickupPoint != null)
+                    {
+                        <div class="col-6">
+                            <div class="bg-light rounded p-2">
+                                <div class="text-muted" style="font-size:11px">Pickup Point</div>
+                                <div class="small">@Model.PickupPoint.Name</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.PaymentReference))
+                {
+                    <p class="text-muted small mb-0">
+                        PayFast ref: <code>@Model.PaymentReference</code>
+                    </p>
+                }
+            </div>
+        </div>
+
+        <!-- ── Transaction timeline ──────────────────────────────────── -->
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h6 class="mb-3">Progress</h6>
+                @{
+                    var steps = new[]
+                    {
+                        ("Payment Pending",   new[] { LiteratureClub.Models.TransactionStatus.PaymentPending, LiteratureClub.Models.TransactionStatus.PaymentConfirmed, LiteratureClub.Models.TransactionStatus.AwaitingPickup, LiteratureClub.Models.TransactionStatus.Completed }),
+                        ("Payment Confirmed", new[] { LiteratureClub.Models.TransactionStatus.PaymentConfirmed, LiteratureClub.Models.TransactionStatus.AwaitingPickup, LiteratureClub.Models.TransactionStatus.Completed }),
+                        ("Exchange Verified", new[] { LiteratureClub.Models.TransactionStatus.Completed }),
+                        ("Completed",         new[] { LiteratureClub.Models.TransactionStatus.Completed }),
+                    };
+                }
+                <div class="d-flex align-items-center gap-1 flex-wrap">
+                    @foreach (var (label, activeStatuses) in steps)
+                    {
+                        var isActive  = activeStatuses.Contains(Model.Status);
+                        var isCurrent = activeStatuses.First() == Model.Status;
+                        <div class="d-flex flex-column align-items-center" style="min-width:80px">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center mb-1"
+                                 style="width:28px;height:28px;font-size:12px;
+                                        background:@(isActive ? "#198754" : "#dee2e6");
+                                        color:@(isActive ? "white" : "#6c757d")">
+                                @(isActive ? "✓" : "○")
+                            </div>
+                            <span style="font-size:10px;text-align:center;
+                                         color:@(isActive ? "#198754" : "#6c757d")">
+                                @label
+                            </span>
+                        </div>
+                        @if (label != "Completed")
+                        {
+                            <div style="flex:1;height:2px;background:@(isActive ? "#198754" : "#dee2e6");min-width:20px;margin-bottom:16px"></div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Right: Action card ─────────────────────────────────────────── -->
+    <div class="col-md-5">
+
+        @* BUYER: Payment pending - show Pay button *@
+        @if (isBuyer && Model.Status == LiteratureClub.Models.TransactionStatus.PaymentPending)
+        {
+            <div class="card shadow-sm border-warning mb-3">
+                <div class="card-body">
+                    <h6 class="text-warning mb-2">⏳ Payment Required</h6>
+                    <p class="text-muted small mb-3">
+                        Your payment has not been completed yet.
+                        Click below to proceed to PayFast.
+                    </p>
+                    <a asp-action="Pay" asp-route-id="@Model.Id"
+                       class="btn btn-warning w-100 fw-semibold">
+                        Complete Payment — R @Model.Amount.ToString("N2")
+                    </a>
+                </div>
+            </div>
+        }
+
+        @* BUYER: Payment confirmed - show verification code *@
+        @if (isBuyer && Model.Status == LiteratureClub.Models.TransactionStatus.PaymentConfirmed)
+        {
+            <div class="card shadow-sm border-success mb-3">
+                <div class="card-body text-center">
+                    <h6 class="text-success mb-2">✅ Payment Confirmed!</h6>
+                    <p class="text-muted small mb-3">
+                        Show this code to the seller when you meet to exchange the book.
+                        Do not share it until you have the book in hand.
+                    </p>
+                    <div class="bg-light border rounded py-3 mb-3">
+                        <div class="text-muted small mb-1">Your verification code</div>
+                        <div class="display-6 fw-bold letter-spacing-wide text-success">
+                            @Model.VerificationCode
+                        </div>
+                    </div>
+                    <p class="text-muted" style="font-size:11px">
+                        Arrange a pickup at a safe campus location.
+                    </p>
+                </div>
+            </div>
+        }
+
+        @* SELLER: Payment confirmed - enter buyer's code *@
+        @if (!isBuyer && Model.Status == LiteratureClub.Models.TransactionStatus.PaymentConfirmed)
+        {
+            <div class="card shadow-sm border-info mb-3">
+                <div class="card-body">
+                    <h6 class="text-info mb-2">📦 Ready for Exchange</h6>
+                    <p class="text-muted small mb-3">
+                        Payment has been confirmed. Meet the buyer at the agreed location,
+                        hand over the book, then enter the 6-character code the buyer shows you.
+                    </p>
+                    <form asp-action="VerifyExchange" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="transactionId" value="@Model.Id" />
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Buyer's Verification Code</label>
+                            <input type="text" name="code" class="form-control form-control-lg text-center fw-bold"
+                                   placeholder="e.g. A3XK7M" maxlength="6"
+                                   style="letter-spacing:6px;text-transform:uppercase"
+                                   required />
+                            <div class="form-text">
+                                Enter the 6-character code displayed on the buyer's screen.
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100 fw-semibold">
+                            Verify &amp; Complete Transaction
+                        </button>
+                    </form>
+                </div>
+            </div>
+        }
+
+        @* Completed - receipt link *@
+        @if (Model.Status == LiteratureClub.Models.TransactionStatus.Completed)
+        {
+            <div class="card shadow-sm border-success mb-3">
+                <div class="card-body text-center">
+                    <div style="font-size:40px" class="mb-2">🎉</div>
+                    <h6 class="text-success mb-2">Transaction Complete!</h6>
+                    @if (isBuyer)
+                    {
+                        <p class="text-muted small mb-3">
+                            Your purchase is confirmed. Enjoy your book!
+                        </p>
+                    }
+                    else
+                    {
+                        <p class="text-muted small mb-3">
+                            Sale complete. Your earnings have been added to your balance.
+                        </p>
+                    }
+                    @if (Model.Receipt != null)
+                    {
+                        <a asp-action="Receipt" asp-route-id="@Model.Id"
+                           class="btn btn-outline-success w-100">
+                            View Receipt
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- Messaging link -->
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h6 class="mb-2">Messages</h6>
+                <p class="text-muted small mb-3">
+                    Communicate with the @(isBuyer ? "seller" : "buyer") to arrange your exchange.
+                </p>
+                <a asp-controller="Messages" asp-action="Thread"
+                   asp-route-transactionId="@Model.Id"
+                   class="btn btn-outline-primary w-100 btn-sm">
+                    Open Message Thread
+                </a>
+            </div>
+        </div>
+
+    </div>
+</div>
