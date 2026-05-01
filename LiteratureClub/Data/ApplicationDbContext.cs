@@ -1,11 +1,18 @@
 ﻿using LiteratureClub.Models;
+using LiteratureClub.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using SixLabors.ImageSharp;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace LiteratureClub.Data
 {
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
+        public ApplicationDbContext()
+        {
+        }
+
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
@@ -28,7 +35,7 @@ namespace LiteratureClub.Data
         public DbSet<TextbookRequest> TextbookRequests { get; set; }
         public DbSet<Donation> Donations { get; set; }
         public DbSet<Announcement> Announcements { get; set; }
-
+        public DbSet<WantedAd> WantedAds { get; set; }
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);

@@ -1,0 +1,137 @@
+﻿@using LiteratureClub.Models
+@model LiteratureClub.ViewModels.WantedAdDetailViewModel
+
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="container mt-4 mb-5">
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="mb-3">
+        <a asp-action="Index" class="text-decoration-none">&larr; Back to Wanted Ads</a>
+    </div>
+
+    <div class="row">
+
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                    <h3 class="mb-0">@Model.Title</h3>
+                    <span class="badge @(Model.Status == WantedAdStatus.Open ? "bg-success" : "bg-secondary") fs-6">
+                        @Model.Status
+                    </span>
+                </div>
+                <div class="card-body">
+                    <h5 class="text-muted mb-4">by @Model.Author</h5>
+                    
+                    <div class="row mb-4">
+                        <div class="col-sm-6 mb-2"><strong>ISBN:</strong> @(Model.ISBN ?? "N/A")</div>
+                        <div class="col-sm-6 mb-2"><strong>Edition:</strong> @(Model.Edition ?? "N/A")</div>
+                        <div class="col-sm-6 mb-2"><strong>Publisher:</strong> @Model.Publisher (@Model.PublicationYear)</div>
+                        <div class="col-sm-6 mb-2"><strong>Category:</strong> @Model.CategoryName</div>
+                        <div class="col-sm-6 mb-2"><strong>Course:</strong> <span class="badge bg-info text-dark">@Model.CourseCode</span></div>
+                    </div>
+
+                    <h6 class="border-bottom pb-2">Preferences</h6>
+                    <div class="row mb-4">
+                        <div class="col-sm-6 mb-2"><strong>Condition:</strong> @Model.PreferredCondition</div>
+                        <div class="col-sm-6 mb-2"><strong>Format:</strong> @Model.PreferredFormat</div>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(Model.AdditionalNotes))
+                    {
+                        <h6 class="border-bottom pb-2">Additional Notes</h6>
+                        <p>@Model.AdditionalNotes</p>
+                    }
+                </div>
+                <div class="card-footer bg-light">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3 fs-3 text-secondary"><i class="bi bi-person-circle"></i></div>
+                        <div>
+                            <strong>Requested by:</strong> @Model.RequesterUsername<br />
+                            <small class="text-muted">@Model.RequesterCampus • Posted @Model.CreatedAt.ToString("MMM dd, yyyy")</small>
+                        </div>
+                        @if (!Model.IsOwnAd && Model.Status == WantedAdStatus.Open)
+                        {
+                            <!-- Optionally link to a messaging feature here if applicable -->
+                            <div class="ms-auto">
+                                <a href="#" class="btn btn-primary">I have this book</a>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar: Owner Controls & Matches -->
+        <div class="col-lg-4">
+            @if (Model.IsOwnAd)
+            {
+                <div class="card shadow-sm border-primary mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Manage Your Request</h5>
+                    </div>
+                    <div class="card-body d-flex flex-column gap-2">
+                        @if (Model.Status == WantedAdStatus.Open)
+                        {
+                            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Edit Request</a>
+                            
+                            <form asp-action="MarkFulfilled" asp-route-id="@Model.Id" method="post" class="d-grid">
+                                <button type="submit" class="btn btn-success" onclick="return confirm('Did you find the book? This will mark the request as fulfilled.');">Mark as Fulfilled</button>
+                            </form>
+                            
+                            <form asp-action="Close" asp-route-id="@Model.Id" method="post" class="d-grid mt-3">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure you want to close this request?');">Close Request</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <div class="alert alert-secondary mb-0">This request is currently @Model.Status.</div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Suggested Matches -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Suggested Matches</h5>
+                </div>
+                <div class="card-body p-0">
+                    @if (Model.MatchingListings.Any())
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var match in Model.MatchingListings)
+                            {
+                                <li class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <a asp-controller="Listings" asp-action="Detail" asp-route-id="@match.ListingId" class="text-decoration-none fw-bold">
+                                                @match.Title
+                                            </a>
+                                            <div class="small text-muted">@match.Condition • @match.SellerUsername</div>
+                                        </div>
+                                        <span class="badge bg-success">@match.Price.ToString("C")</span>
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <div class="p-3 text-muted small">
+                            No immediate matches found in our listings. We'll keep looking!
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

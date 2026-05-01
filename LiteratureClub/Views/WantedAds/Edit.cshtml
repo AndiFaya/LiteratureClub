@@ -1,0 +1,92 @@
+﻿@using LiteratureClub.Models
+@model LiteratureClub.ViewModels.WantedAdFormViewModel
+
+@{
+    ViewData["Title"] = "Edit Wanted Ad";
+}
+
+<div class="container mt-4 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h2 class="mb-4">Edit Wanted Ad</h2>
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form asp-action="Edit" method="post">
+
+                        <input type="hidden" asp-for="Id" />
+                        
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <h5 class="border-bottom pb-2 mb-3">Book Details</h5>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-12">
+                                <label asp-for="Title" class="form-label"></label>
+                                <input asp-for="Title" class="form-control" />
+                                <span asp-validation-for="Title" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Author" class="form-label"></label>
+                                <input asp-for="Author" class="form-control" />
+                                <span asp-validation-for="Author" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="ISBN" class="form-label"></label>
+                                <input asp-for="ISBN" class="form-control" />
+                                <span asp-validation-for="ISBN" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Edition" class="form-label"></label>
+                                <input asp-for="Edition" class="form-control" />
+                                <span asp-validation-for="Edition" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="PublicationYear" class="form-label"></label>
+                                <input asp-for="PublicationYear" class="form-control" />
+                                <span asp-validation-for="PublicationYear" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Publisher" class="form-label"></label>
+                                <input asp-for="Publisher" class="form-control" />
+                                <span asp-validation-for="Publisher" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <h5 class="border-bottom pb-2 mb-3">Academics & Preferences</h5>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label asp-for="CategoryId" class="form-label"></label>
+                                <select asp-for="CategoryId" asp-items="@(new SelectList(Model.Categories, "Id", "Label"))" class="form-select"></select>
+                                <span asp-validation-for="CategoryId" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="CourseCodeId" class="form-label"></label>
+                                <select asp-for="CourseCodeId" asp-items="@(new SelectList(Model.CourseCodes, "Id", "Label"))" class="form-select"></select>
+                                <span asp-validation-for="CourseCodeId" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="PreferredCondition" class="form-label"></label>
+                                <select asp-for="PreferredCondition" asp-items="Html.GetEnumSelectList<PreferredCondition>()" class="form-select"></select>
+                                <span asp-validation-for="PreferredCondition" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="PreferredFormat" class="form-label"></label>
+                                <select asp-for="PreferredFormat" asp-items="Html.GetEnumSelectList<PreferredFormat>()" class="form-select"></select>
+                                <span asp-validation-for="PreferredFormat" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-12">
+                                <label asp-for="AdditionalNotes" class="form-label"></label>
+                                <textarea asp-for="AdditionalNotes" class="form-control" rows="3"></textarea>
+                                <span asp-validation-for="AdditionalNotes" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <a asp-action="Detail" asp-route-id="@Model.Id" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

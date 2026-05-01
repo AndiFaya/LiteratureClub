@@ -1,0 +1,80 @@
+﻿@model LiteratureClub.ViewModels.WantedAdIndexViewModel
+
+@{
+    ViewData["Title"] = "Wanted Ads";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Wanted Ads</h2>
+        <a asp-action="Create" class="btn btn-primary">Post a Wanted Ad</a>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4 bg-light">
+        <div class="card-body">
+            <form asp-action="Index" method="get" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label asp-for="SearchTerm" class="form-label">Search</label>
+                    <input asp-for="SearchTerm" class="form-control" placeholder="Title, Author, or ISBN..." />
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="CategoryId" class="form-label">Category</label>
+                    <select asp-for="CategoryId" asp-items="@(new SelectList(Model.Categories, "Id", "Label"))" class="form-select">
+                        <option value="">All Categories</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="CourseCodeId" class="form-label">Course</label>
+                    <select asp-for="CourseCodeId" asp-items="@(new SelectList(Model.CourseCodes, "Id", "Label"))" class="form-select">
+                        <option value="">All Courses</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-secondary w-100">Filter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Wanted Ads List -->
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        @if (!Model.Ads.Any())
+        {
+            <div class="col-12 text-center py-5">
+                <p class="text-muted fs-5">No wanted ads match your search criteria.</p>
+            </div>
+        }
+        else
+        {
+            @foreach (var ad in Model.Ads)
+            {
+                <div class="col">
+                    <div class="card h-100 shadow-sm border-primary">
+                        <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                            <span class="badge bg-info text-dark">@ad.CourseCode</span>
+                            <small class="text-muted">@ad.CreatedAt.ToString("MMM dd, yyyy")</small>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">@ad.Title</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">by @ad.Author @(string.IsNullOrEmpty(ad.Edition) ? "" : $"| {ad.Edition} Ed.")</h6>
+                            
+                            <p class="card-text small mb-1"><strong>Category:</strong> @ad.CategoryName</p>
+                            <p class="card-text small mb-1">
+                                <strong>Looking for:</strong>
+                                @ad.PreferredCondition Condition, @ad.PreferredFormat Format
+                            </p>
+                            <hr />
+                            <div class="d-flex align-items-center small text-muted">
+                                <i class="bi bi-person-circle me-2"></i> @ad.RequesterUsername (@ad.RequesterCampus)
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <a asp-action="Detail" asp-route-id="@ad.Id" class="btn btn-outline-primary w-100">View Details</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
