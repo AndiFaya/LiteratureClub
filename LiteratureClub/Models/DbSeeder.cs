@@ -26,7 +26,7 @@ namespace LiteratureClub.Data
                     }
                 }
 
-                // Campuses 
+            
                 // Campuses
                 if (!await context.Campuses.AnyAsync())
                 {
