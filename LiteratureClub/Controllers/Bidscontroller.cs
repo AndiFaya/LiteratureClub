@@ -21,7 +21,7 @@ namespace LiteratureClub.Controllers
             _userManager = userManager;
         }
 
-        // ── POST: /Bids/Place ──────────────────────────────────────────────
+        // POST /Bids/Place
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Place(int listingId, decimal offerAmount,
@@ -77,7 +77,7 @@ namespace LiteratureClub.Controllers
             return RedirectToAction("Detail", "Listings", new { id = listingId });
         }
 
-        // ── POST: /Bids/Accept ─────────────────────────────────────────────
+        //POST /Bids/Accept
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Accept(int bidId)
@@ -126,7 +126,7 @@ namespace LiteratureClub.Controllers
                 new { bidId = bid.Id });
         }
 
-        // ── POST: /Bids/Reject ─────────────────────────────────────────────
+        //POST /Bids/Reject
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Reject(int bidId)
@@ -154,7 +154,7 @@ namespace LiteratureClub.Controllers
             return RedirectToAction("Index", "Dashboard");
         }
 
-        // ── POST: /Bids/Withdraw ───────────────────────────────────────────
+        // POST /Bids/Withdraw
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Withdraw(int bidId)

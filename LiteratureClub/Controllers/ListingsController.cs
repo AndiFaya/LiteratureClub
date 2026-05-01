@@ -24,7 +24,7 @@ namespace LiteratureClub.Controllers
             _env = env;
         }
 
-        // ── GET: /Listings ─────────────────────────────────────────────────
+        // GET Listings
         [HttpGet]
         public async Task<IActionResult> Index(
             string? searchTerm,
@@ -99,7 +99,7 @@ namespace LiteratureClub.Controllers
             return View(vm);
         }
 
-        // ── GET: /Listings/Detail/5 ────────────────────────────────────────
+        //GET /Listings/Detail
         [HttpGet]
         public async Task<IActionResult> Detail(int id)
         {
@@ -167,7 +167,7 @@ namespace LiteratureClub.Controllers
             return View(vm);
         }
 
-        // ── GET: /Listings/Create ──────────────────────────────────────────
+        //GET /Listings/Create
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> Create()
@@ -180,7 +180,7 @@ namespace LiteratureClub.Controllers
             return View(vm);
         }
 
-        // ── POST: /Listings/Create ─────────────────────────────────────────
+        //POST /Listings/Create
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
@@ -240,7 +240,7 @@ namespace LiteratureClub.Controllers
             return RedirectToAction(nameof(Detail), new { id = listing.Id });
         }
 
-        // ── GET: /Listings/Edit/5 ──────────────────────────────────────────
+        //GET /Listings/Edit
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> Edit(int id)
@@ -276,7 +276,7 @@ namespace LiteratureClub.Controllers
             return View(vm);
         }
 
-        // ── POST: /Listings/Edit/5 ─────────────────────────────────────────
+        //POST /Listings/Edit
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
@@ -338,7 +338,7 @@ namespace LiteratureClub.Controllers
             return RedirectToAction(nameof(Detail), new { id = listing.Id });
         }
 
-        // ── POST: /Listings/Delete/5 ───────────────────────────────────────
+        //POST /Listings/Delete
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
@@ -359,7 +359,7 @@ namespace LiteratureClub.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // ── POST: /Listings/ToggleWatchlist/5 ─────────────────────────────
+        //POST /Listings/ToggleWatchlist
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
@@ -383,7 +383,7 @@ namespace LiteratureClub.Controllers
             return RedirectToAction(nameof(Detail), new { id });
         }
 
-        // ── Helpers ────────────────────────────────────────────────────────
+        //Helpers
         private async Task<List<DropdownOption>> GetCategoryOptionsAsync() =>
             await _context.TextbookCategories
                 .Where(c => c.IsActive)

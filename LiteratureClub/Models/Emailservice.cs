@@ -19,7 +19,7 @@ namespace LiteratureClub.Services
             _logger = logger;
         }
 
-        // ── 1. Registration — email verification link ──────────────────────
+        //Registration email verification link
         public async Task<bool> SendEmailVerificationAsync(
             ApplicationUser user, string verificationLink)
         {
@@ -85,7 +85,7 @@ namespace LiteratureClub.Services
             return await SendAsync(user.Email!, subject, html, text);
         }
 
-        // ── 2. Payment confirmed — send verification code to buyer ─────────
+        //Payment confirmed
         public async Task<bool> SendVerificationCodeAsync(Transaction transaction)
         {
             var subject = $"LiteratureClub — Your pickup code for \"{transaction.Listing.Title}\"";
@@ -162,10 +162,10 @@ namespace LiteratureClub.Services
             return await SendAsync(transaction.Buyer.Email!, subject, html, text);
         }
 
-        // ── 3. Transaction complete — receipt to buyer and seller ──────────
+        //Transaction complete, receipt to buyer and seller
         public async Task<bool> SendReceiptEmailAsync(Receipt receipt, Transaction transaction)
         {
-            // ── Buyer receipt ──────────────────────────────────────────────
+            //Buyer receipt
             var buyerSubject = $"LiteratureClub Receipt — {receipt.TextbookTitle}";
             var pickupRow = string.IsNullOrEmpty(receipt.PickupPointName) ? "" :
                 $"<tr><td style='padding:6px 0;color:#6c757d'>Pickup point</td>" +
@@ -236,7 +236,7 @@ namespace LiteratureClub.Services
                             $"Book: {receipt.TextbookTitle}\nAmount: R {receipt.AmountPaid:N2}\n" +
                             $"Transaction: TXN-{transaction.Id:D6}";
 
-            // ── Seller notification ────────────────────────────────────────
+            //Seller notification
             var sellerSubject = $"LiteratureClub — Sale complete: {receipt.TextbookTitle}";
             var sellerHtml = $@"
 <!DOCTYPE html>
@@ -289,11 +289,11 @@ namespace LiteratureClub.Services
             return buyerOk && sellerOk;
         }
 
-        // ── Core SendGrid send ─────────────────────────────────────────────
+        //SendGrid send
         private async Task<bool> SendAsync(
             string toEmail, string subject, string htmlBody, string textBody)
         {
-            // Guard: unconfigured API key
+            //unconfigured API key
             if (string.IsNullOrWhiteSpace(ApiKey) ||
                 ApiKey == "YOUR_SENDGRID_API_KEY_HERE")
             {

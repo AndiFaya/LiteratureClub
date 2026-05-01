@@ -4,7 +4,7 @@ namespace LiteratureClub.ViewModels
 {
     public class DashboardViewModel
     {
-        // ── Profile summary ────────────────────────────────────────────────
+        // Profile summary
         public string DisplayUsername { get; set; } = string.Empty;
         public string FullName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
@@ -13,7 +13,7 @@ namespace LiteratureClub.ViewModels
         public double AverageRating { get; set; }
         public int TotalReviews { get; set; }
 
-        // ── Stats ──────────────────────────────────────────────────────────
+        //Stats
         public int ActiveListingsCount { get; set; }
         public int TotalSalesCount { get; set; }
         public int TotalPurchasesCount { get; set; }
@@ -21,19 +21,15 @@ namespace LiteratureClub.ViewModels
         public int WatchlistCount { get; set; }
         public int UnreadMessagesCount { get; set; }
 
-        // ── My listings ────────────────────────────────────────────────────
+        
         public List<DashboardListingRow> MyListings { get; set; } = new();
 
-        // ── My purchases ──────────────────────────────────────────────────
         public List<DashboardTransactionRow> MyPurchases { get; set; } = new();
 
-        // ── My sales ──────────────────────────────────────────────────────
         public List<DashboardTransactionRow> MySales { get; set; } = new();
 
-        // ── Watchlist ──────────────────────────────────────────────────────
         public List<ListingCardViewModel> Watchlist { get; set; } = new();
 
-        // ── Incoming bids (on my listings) ────────────────────────────────
         public List<DashboardBidRow> IncomingBids { get; set; } = new();
     }
 

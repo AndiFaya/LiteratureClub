@@ -7,7 +7,6 @@
 
     @if (!string.IsNullOrEmpty(ViewBag.Error as string))
     {
-        <div style="font-size:56px" class="mb-3">❌</div>
         <h2 class="mb-2">Verification Failed</h2>
         <p class="text-muted mb-4">@ViewBag.Error</p>
         <a asp-action="Register" asp-controller="Account" class="btn btn-primary">

@@ -32,7 +32,7 @@ namespace LiteratureClub.Controllers
             _logger = logger;
         }
 
-        // ── GET /Account/Register ──────────────────────────────────────────
+        //GET /Account/Register
         [HttpGet]
         public async Task<IActionResult> Register()
         {
@@ -45,7 +45,7 @@ namespace LiteratureClub.Controllers
             });
         }
 
-        // ── POST /Account/Register ─────────────────────────────────────────
+        //POST /Account/Register
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel vm)
@@ -97,7 +97,7 @@ namespace LiteratureClub.Controllers
                     return View(vm);
                 }
 
-                // Create user — email NOT confirmed yet
+                // Create user email not confirmed yet
                 var user = new ApplicationUser
                 {
                     FirstName = vm.FirstName.Trim(),
@@ -148,9 +148,7 @@ namespace LiteratureClub.Controllers
                         new { email = user.Email });
                 }
 
-                // Fallback: SendGrid not yet configured — auto-confirm so
-                // the user isn't locked out during development/testing.
-                // The link is still logged above for admin reference.
+                // Fallback: SendGrid is not configured yet, auto-confirm so the user isn't locked out during development/testing
                 _logger.LogWarning(
                     "SendGrid not configured or send failed. " +
                     "Auto-confirming {Email} so they can sign in.", user.Email);
@@ -160,7 +158,7 @@ namespace LiteratureClub.Controllers
                 TempData["Success"] =
                     $"Welcome, {user.DisplayUsername}! " +
                     "Your account is active. " +
-                    "(Verification email could not be sent — please configure SendGrid.)";
+                    "(Verification email could not be sent)";
                 return RedirectToAction("Index", "Home");
             }
             catch (Exception ex)
@@ -174,7 +172,7 @@ namespace LiteratureClub.Controllers
             return View(vm);
         }
 
-        // ── GET /Account/VerificationSent ──────────────────────────────────
+        //GET /Account/VerificationSent
         [HttpGet]
         public IActionResult VerificationSent(string email)
         {
@@ -182,7 +180,7 @@ namespace LiteratureClub.Controllers
             return View();
         }
 
-        // ── GET /Account/ConfirmEmail ──────────────────────────────────────
+        //GET /Account/ConfirmEmail
         [HttpGet]
         public async Task<IActionResult> ConfirmEmail(string userId, string token)
         {
@@ -216,11 +214,11 @@ namespace LiteratureClub.Controllers
             return View("ConfirmEmailResult");
         }
 
-        // ── GET /Account/ResendVerification ───────────────────────────────
+        //GET /Account/ResendVerification
         [HttpGet]
         public IActionResult ResendVerification() => View();
 
-        // ── POST /Account/ResendVerification ──────────────────────────────
+        //POST /Account/ResendVerification
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ResendVerification(string email)
@@ -245,7 +243,7 @@ namespace LiteratureClub.Controllers
             return View();
         }
 
-        // ── GET /Account/Login ─────────────────────────────────────────────
+        //GET /Account/Login
         [HttpGet]
         public IActionResult Login(string? returnUrl = null)
         {
@@ -256,7 +254,7 @@ namespace LiteratureClub.Controllers
             return View(new LoginViewModel());
         }
 
-        // ── POST /Account/Login ────────────────────────────────────────────
+        //POST /Account/Login
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel vm, string? returnUrl = null)
@@ -323,7 +321,7 @@ namespace LiteratureClub.Controllers
             return View(vm);
         }
 
-        // ── POST /Account/Logout ───────────────────────────────────────────
+        //POST /Account/Logout
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
@@ -333,11 +331,11 @@ namespace LiteratureClub.Controllers
             return RedirectToAction("Index", "Home");
         }
 
-        // ── GET /Account/AccessDenied ──────────────────────────────────────
+        //GET /Account/AccessDenied
         [HttpGet]
         public IActionResult AccessDenied() => View();
 
-        // ── Helpers ────────────────────────────────────────────────────────
+        //Helpers
         private async Task<List<CampusOption>> GetCampusOptionsAsync()
         {
             try

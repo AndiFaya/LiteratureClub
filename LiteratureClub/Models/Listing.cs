@@ -34,7 +34,6 @@ namespace LiteratureClub.Models
         [Required]
         public string SellerId { get; set; } = string.Empty;
 
-        // Textbook details
         [Required]
         [MaxLength(20)]
         public string ISBN { get; set; } = string.Empty;
@@ -73,10 +72,8 @@ namespace LiteratureClub.Models
 
         public int CourseCodeId { get; set; }
 
-        // Listing state
         public ListingStatus Status { get; set; } = ListingStatus.Available;
 
-        // Bidding / auction fields
         public bool IsOpenForBidding { get; set; } = false;
 
         public DateTime? BidExpiresAt { get; set; }
