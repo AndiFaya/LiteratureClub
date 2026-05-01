@@ -67,7 +67,7 @@ using (var scope = app.Services.CreateScope())
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
     try
     {
-        await context.Database.EnsureCreatedAsync();
+        await context.Database.MigrateAsync();
         await DbSeeder.SeedAsync(scope.ServiceProvider);
     }
     catch (Exception ex)

@@ -40,6 +40,10 @@ namespace LiteratureClub.Data
                  .WithMany(c => c.Users)
                  .HasForeignKey(u => u.CampusId)
                  .OnDelete(DeleteBehavior.Restrict);
+
+               
+                e.Property(u => u.EarningsBalance)
+                 .HasColumnType("decimal(10,2)");
             });
 
             // ── Listing ────────────────────────────────────────────────────

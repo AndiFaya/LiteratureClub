@@ -29,16 +29,62 @@ namespace LiteratureClub.Data
                 if (!await context.Campuses.AnyAsync())
                 {
                     context.Campuses.AddRange(
-                        new Campus { Name = "Howard College",      University = "UKZN",                   City = "Durban",             IsActive = true },
-                        new Campus { Name = "Westville",           University = "UKZN",                   City = "Durban",             IsActive = true },
-                        new Campus { Name = "Pietermaritzburg",    University = "UKZN",                   City = "Pietermaritzburg",   IsActive = true },
-                        new Campus { Name = "Edgewood",            University = "UKZN",                   City = "Pinetown",           IsActive = true },
-                        new Campus { Name = "Medical School",      University = "UKZN",                   City = "Durban",             IsActive = true },
-                        new Campus { Name = "Durban Campus",       University = "DUT",                    City = "Durban",             IsActive = true },
-                        new Campus { Name = "Pretoria Main",       University = "University of Pretoria", City = "Pretoria",           IsActive = true },
-                        new Campus { Name = "Stellenbosch Main",   University = "Stellenbosch University",City = "Stellenbosch",       IsActive = true },
-                        new Campus { Name = "Upper Campus",        University = "UCT",                    City = "Cape Town",          IsActive = true },
-                        new Campus { Name = "East Campus",         University = "Wits",                   City = "Johannesburg",       IsActive = true }
+
+                        // ── Tshwane University of Technology (TUT) ────────────────────
+                        new Campus { Name = "Pretoria Campus", University = "Tshwane University of Technology", City = "Pretoria", IsActive = true },
+                        new Campus { Name = "Arcadia Campus", University = "Tshwane University of Technology", City = "Pretoria", IsActive = true },
+                        new Campus { Name = "Arts Campus", University = "Tshwane University of Technology", City = "Pretoria", IsActive = true },
+                        new Campus { Name = "GaRankuwa Campus", University = "Tshwane University of Technology", City = "GaRankuwa", IsActive = true },
+                        new Campus { Name = "Polokwane Campus", University = "Tshwane University of Technology", City = "Polokwane", IsActive = true },
+                        new Campus { Name = "Soshanguve North Campus", University = "Tshwane University of Technology", City = "Soshanguve", IsActive = true },
+                        new Campus { Name = "Soshanguve South Campus", University = "Tshwane University of Technology", City = "Soshanguve", IsActive = true },
+                        new Campus { Name = "eMalahleni Campus", University = "Tshwane University of Technology", City = "eMalahleni", IsActive = true },
+                        new Campus { Name = "Mbombela Campus", University = "Tshwane University of Technology", City = "Mbombela", IsActive = true },
+
+                        // ── University of the Witwatersrand (Wits) ────────────────────
+                        new Campus { Name = "East Campus Braamfontein", University = "University of the Witwatersrand", City = "Johannesburg", IsActive = true },
+                        new Campus { Name = "West Campus Braamfontein", University = "University of the Witwatersrand", City = "Johannesburg", IsActive = true },
+                        new Campus { Name = "Education Campus Parktown", University = "University of the Witwatersrand", City = "Johannesburg", IsActive = true },
+                        new Campus { Name = "Medical School Campus Parktown", University = "University of the Witwatersrand", City = "Johannesburg", IsActive = true },
+                        new Campus { Name = "Wits Business School Parktown", University = "University of the Witwatersrand", City = "Johannesburg", IsActive = true },
+
+                        // ── University of Johannesburg (UJ) ───────────────────────────
+                        new Campus { Name = "Auckland Park Kingsway (APK)", University = "University of Johannesburg", City = "Johannesburg", IsActive = true },
+                        new Campus { Name = "Auckland Park Bunting Road (APB)", University = "University of Johannesburg", City = "Johannesburg", IsActive = true },
+                        new Campus { Name = "Doornfontein (DFC)", University = "University of Johannesburg", City = "Johannesburg", IsActive = true },
+                        new Campus { Name = "Soweto Campus", University = "University of Johannesburg", City = "Soweto", IsActive = true },
+
+                        // ── University of Pretoria (UP) ───────────────────────────────
+                        new Campus { Name = "Hatfield Campus", University = "University of Pretoria", City = "Pretoria", IsActive = true },
+                        new Campus { Name = "Groenkloof Campus", University = "University of Pretoria", City = "Pretoria", IsActive = true },
+                        new Campus { Name = "Prinshof Campus", University = "University of Pretoria", City = "Pretoria", IsActive = true },
+                        new Campus { Name = "Onderstepoort Campus", University = "University of Pretoria", City = "Pretoria", IsActive = true },
+                        new Campus { Name = "Hillcrest Campus", University = "University of Pretoria", City = "Pretoria", IsActive = true },
+                        new Campus { Name = "Mamelodi Campus", University = "University of Pretoria", City = "Mamelodi", IsActive = true },
+                        new Campus { Name = "Gordon Institute of Business Science", University = "University of Pretoria", City = "Illovo", IsActive = true },
+
+                        // ── STADIO Higher Education ───────────────────────────────────
+                        new Campus { Name = "Bellville", University = "STADIO Higher Education", City = "Bellville", IsActive = true },
+                        new Campus { Name = "Centurion", University = "STADIO Higher Education", City = "Centurion", IsActive = true },
+                        new Campus { Name = "Durbanville", University = "STADIO Higher Education", City = "Durbanville", IsActive = true },
+                        new Campus { Name = "Musgrave", University = "STADIO Higher Education", City = "Durban", IsActive = true },
+                        new Campus { Name = "Hatfield", University = "STADIO Higher Education", City = "Pretoria", IsActive = true },
+                        new Campus { Name = "Randburg", University = "STADIO Higher Education", City = "Randburg", IsActive = true },
+                        new Campus { Name = "Waterfall", University = "STADIO Higher Education", City = "Midrand", IsActive = true },
+
+                        // ── Emeris ────────────────────────────────────────────────────
+                        new Campus { Name = "Cape Town", University = "Emeris", City = "Cape Town", IsActive = true },
+                        new Campus { Name = "Newlands", University = "Emeris", City = "Cape Town", IsActive = true },
+                        new Campus { Name = "Durban North", University = "Emeris", City = "Durban", IsActive = true },
+                        new Campus { Name = "Westville", University = "Emeris", City = "Durban", IsActive = true },
+                        new Campus { Name = "Umhlanga", University = "Emeris", City = "Umhlanga", IsActive = true },
+                        new Campus { Name = "Pietermaritzburg", University = "Emeris", City = "Pietermaritzburg", IsActive = true },
+                        new Campus { Name = "Nelson Mandela Bay", University = "Emeris", City = "Gqeberha", IsActive = true },
+                        new Campus { Name = "Pretoria", University = "Emeris", City = "Pretoria", IsActive = true },
+                        new Campus { Name = "Sandton", University = "Emeris", City = "Sandton", IsActive = true },
+                        new Campus { Name = "Rosebank", University = "Emeris", City = "Johannesburg", IsActive = true },
+                        new Campus { Name = "Ruimsig", University = "Emeris", City = "Roodepoort", IsActive = true }
+
                     );
                     await context.SaveChangesAsync();
                     logger.LogInformation("Campuses seeded.");
