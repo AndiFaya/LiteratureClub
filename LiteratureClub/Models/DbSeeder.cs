@@ -15,7 +15,7 @@ namespace LiteratureClub.Data
 
             try
             {
-                // ── Roles ──────────────────────────────────────────────────
+                // Roles 
                 foreach (var role in new[] { "Admin", "Student" })
                 {
                     if (!await roleManager.RoleExistsAsync(role))
@@ -25,12 +25,12 @@ namespace LiteratureClub.Data
                     }
                 }
 
-                // ── Campuses ───────────────────────────────────────────────
+                // Campuses 
                 if (!await context.Campuses.AnyAsync())
                 {
                     context.Campuses.AddRange(
 
-                        // ── Tshwane University of Technology (TUT) ────────────────────
+                        // Tshwane University of Technology (TUT)
                         new Campus { Name = "Pretoria Campus", University = "Tshwane University of Technology", City = "Pretoria", IsActive = true },
                         new Campus { Name = "Arcadia Campus", University = "Tshwane University of Technology", City = "Pretoria", IsActive = true },
                         new Campus { Name = "Arts Campus", University = "Tshwane University of Technology", City = "Pretoria", IsActive = true },
@@ -41,20 +41,20 @@ namespace LiteratureClub.Data
                         new Campus { Name = "eMalahleni Campus", University = "Tshwane University of Technology", City = "eMalahleni", IsActive = true },
                         new Campus { Name = "Mbombela Campus", University = "Tshwane University of Technology", City = "Mbombela", IsActive = true },
 
-                        // ── University of the Witwatersrand (Wits) ────────────────────
+                        // University of the Witwatersrand (Wits)
                         new Campus { Name = "East Campus Braamfontein", University = "University of the Witwatersrand", City = "Johannesburg", IsActive = true },
                         new Campus { Name = "West Campus Braamfontein", University = "University of the Witwatersrand", City = "Johannesburg", IsActive = true },
                         new Campus { Name = "Education Campus Parktown", University = "University of the Witwatersrand", City = "Johannesburg", IsActive = true },
                         new Campus { Name = "Medical School Campus Parktown", University = "University of the Witwatersrand", City = "Johannesburg", IsActive = true },
                         new Campus { Name = "Wits Business School Parktown", University = "University of the Witwatersrand", City = "Johannesburg", IsActive = true },
 
-                        // ── University of Johannesburg (UJ) ───────────────────────────
+                        // University of Johannesburg (UJ) 
                         new Campus { Name = "Auckland Park Kingsway (APK)", University = "University of Johannesburg", City = "Johannesburg", IsActive = true },
                         new Campus { Name = "Auckland Park Bunting Road (APB)", University = "University of Johannesburg", City = "Johannesburg", IsActive = true },
                         new Campus { Name = "Doornfontein (DFC)", University = "University of Johannesburg", City = "Johannesburg", IsActive = true },
                         new Campus { Name = "Soweto Campus", University = "University of Johannesburg", City = "Soweto", IsActive = true },
 
-                        // ── University of Pretoria (UP) ───────────────────────────────
+                        //  University of Pretoria (UP) 
                         new Campus { Name = "Hatfield Campus", University = "University of Pretoria", City = "Pretoria", IsActive = true },
                         new Campus { Name = "Groenkloof Campus", University = "University of Pretoria", City = "Pretoria", IsActive = true },
                         new Campus { Name = "Prinshof Campus", University = "University of Pretoria", City = "Pretoria", IsActive = true },
@@ -63,7 +63,7 @@ namespace LiteratureClub.Data
                         new Campus { Name = "Mamelodi Campus", University = "University of Pretoria", City = "Mamelodi", IsActive = true },
                         new Campus { Name = "Gordon Institute of Business Science", University = "University of Pretoria", City = "Illovo", IsActive = true },
 
-                        // ── STADIO Higher Education ───────────────────────────────────
+                        //  STADIO Higher Education 
                         new Campus { Name = "Bellville", University = "STADIO Higher Education", City = "Bellville", IsActive = true },
                         new Campus { Name = "Centurion", University = "STADIO Higher Education", City = "Centurion", IsActive = true },
                         new Campus { Name = "Durbanville", University = "STADIO Higher Education", City = "Durbanville", IsActive = true },
@@ -72,7 +72,7 @@ namespace LiteratureClub.Data
                         new Campus { Name = "Randburg", University = "STADIO Higher Education", City = "Randburg", IsActive = true },
                         new Campus { Name = "Waterfall", University = "STADIO Higher Education", City = "Midrand", IsActive = true },
 
-                        // ── Emeris ────────────────────────────────────────────────────
+                        // Emeris 
                         new Campus { Name = "Cape Town", University = "Emeris", City = "Cape Town", IsActive = true },
                         new Campus { Name = "Newlands", University = "Emeris", City = "Cape Town", IsActive = true },
                         new Campus { Name = "Durban North", University = "Emeris", City = "Durban", IsActive = true },
@@ -90,7 +90,7 @@ namespace LiteratureClub.Data
                     logger.LogInformation("Campuses seeded.");
                 }
 
-                // ── Textbook categories ────────────────────────────────────
+                // Textbook categories 
                 if (!await context.TextbookCategories.AnyAsync())
                 {
                     context.TextbookCategories.AddRange(
@@ -111,7 +111,7 @@ namespace LiteratureClub.Data
                     logger.LogInformation("Categories seeded.");
                 }
 
-                // ── Course codes ───────────────────────────────────────────
+                // Course codes 
                 if (!await context.CourseCodes.AnyAsync())
                 {
                     var campuses = await context.Campuses.ToListAsync();
@@ -137,7 +137,7 @@ namespace LiteratureClub.Data
                     logger.LogInformation("Course codes seeded.");
                 }
 
-                // ── Pickup points ──────────────────────────────────────────
+                //  Pickup points 
                 if (!await context.PickupPoints.AnyAsync())
                 {
                     var campuses = await context.Campuses.ToListAsync();

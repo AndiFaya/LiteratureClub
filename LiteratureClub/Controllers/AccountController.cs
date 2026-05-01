@@ -32,7 +32,7 @@ namespace LiteratureClub.Controllers
             _logger = logger;
         }
 
-        // ── GET /Account/Register ──────────────────────────────────────────
+        
         [HttpGet]
         public async Task<IActionResult> Register()
         {
@@ -45,7 +45,6 @@ namespace LiteratureClub.Controllers
             });
         }
 
-        // ── POST /Account/Register ─────────────────────────────────────────
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel vm)
@@ -174,7 +173,7 @@ namespace LiteratureClub.Controllers
             return View(vm);
         }
 
-        // ── GET /Account/VerificationSent ──────────────────────────────────
+        
         [HttpGet]
         public IActionResult VerificationSent(string email)
         {
@@ -182,7 +181,7 @@ namespace LiteratureClub.Controllers
             return View();
         }
 
-        // ── GET /Account/ConfirmEmail ──────────────────────────────────────
+        
         [HttpGet]
         public async Task<IActionResult> ConfirmEmail(string userId, string token)
         {
@@ -216,11 +215,11 @@ namespace LiteratureClub.Controllers
             return View("ConfirmEmailResult");
         }
 
-        // ── GET /Account/ResendVerification ───────────────────────────────
+        
         [HttpGet]
         public IActionResult ResendVerification() => View();
 
-        // ── POST /Account/ResendVerification ──────────────────────────────
+        
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ResendVerification(string email)
@@ -245,7 +244,7 @@ namespace LiteratureClub.Controllers
             return View();
         }
 
-        // ── GET /Account/Login ─────────────────────────────────────────────
+        
         [HttpGet]
         public IActionResult Login(string? returnUrl = null)
         {
@@ -256,7 +255,7 @@ namespace LiteratureClub.Controllers
             return View(new LoginViewModel());
         }
 
-        // ── POST /Account/Login ────────────────────────────────────────────
+        
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel vm, string? returnUrl = null)
@@ -323,7 +322,6 @@ namespace LiteratureClub.Controllers
             return View(vm);
         }
 
-        // ── POST /Account/Logout ───────────────────────────────────────────
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
@@ -333,11 +331,11 @@ namespace LiteratureClub.Controllers
             return RedirectToAction("Index", "Home");
         }
 
-        // ── GET /Account/AccessDenied ──────────────────────────────────────
+
         [HttpGet]
         public IActionResult AccessDenied() => View();
 
-        // ── Helpers ────────────────────────────────────────────────────────
+        
         private async Task<List<CampusOption>> GetCampusOptionsAsync()
         {
             try

@@ -6,11 +6,11 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ── Database ───────────────────────────────────────────────────────────────
+// Database 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// ── Identity ───────────────────────────────────────────────────────────────
+// Identity 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
     options.Password.RequiredLength = 8;
@@ -30,10 +30,8 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
-// ── MVC ────────────────────────────────────────────────────────────────────
 builder.Services.AddControllersWithViews();
 
-// ── Session ────────────────────────────────────────────────────────────────
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
@@ -41,12 +39,12 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-// ── Custom services ────────────────────────────────────────────────────────
+
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<PayFastService>();
 builder.Services.AddScoped<EmailService>();
 
-// ── Auth cookies ───────────────────────────────────────────────────────────
+
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Account/Login";
@@ -60,7 +58,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 var app = builder.Build();
 
-// ── Ensure DB exists and seed ──────────────────────────────────────────────
+// Ensure DB exists and seed 
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -76,7 +74,7 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// ── Middleware pipeline ────────────────────────────────────────────────────
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");

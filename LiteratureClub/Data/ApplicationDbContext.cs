@@ -11,7 +11,7 @@ namespace LiteratureClub.Data
         {
         }
 
-        // ── Core entities ──────────────────────────────────────────────────
+        // Core entities 
         public DbSet<Campus> Campuses { get; set; }
         public DbSet<CourseCode> CourseCodes { get; set; }
         public DbSet<TextbookCategory> TextbookCategories { get; set; }
@@ -33,7 +33,7 @@ namespace LiteratureClub.Data
         {
             base.OnModelCreating(builder);
 
-            // ── ApplicationUser ────────────────────────────────────────────
+            // ApplicationUser 
             builder.Entity<ApplicationUser>(e =>
             {
                 e.HasOne(u => u.Campus)
@@ -46,7 +46,7 @@ namespace LiteratureClub.Data
                  .HasColumnType("decimal(10,2)");
             });
 
-            // ── Listing ────────────────────────────────────────────────────
+            // Listing 
             builder.Entity<Listing>(e =>
             {
                 e.HasOne(l => l.Seller)
@@ -68,7 +68,7 @@ namespace LiteratureClub.Data
                  .HasColumnType("decimal(10,2)");
             });
 
-            // ── Bid ────────────────────────────────────────────────────────
+            // Bid
             builder.Entity<Bid>(e =>
             {
                 e.HasOne(b => b.Listing)
@@ -85,7 +85,7 @@ namespace LiteratureClub.Data
                  .HasColumnType("decimal(10,2)");
             });
 
-            // ── Transaction ────────────────────────────────────────────────
+            // Transaction 
             builder.Entity<Transaction>(e =>
             {
                 e.HasOne(t => t.Listing)
@@ -112,7 +112,7 @@ namespace LiteratureClub.Data
                  .HasColumnType("decimal(10,2)");
             });
 
-            // ── Receipt ────────────────────────────────────────────────────
+            // Receipt 
             builder.Entity<Receipt>(e =>
             {
                 e.HasOne(r => r.Transaction)
@@ -124,7 +124,7 @@ namespace LiteratureClub.Data
                  .HasColumnType("decimal(10,2)");
             });
 
-            // ── SellerReview ───────────────────────────────────────────────
+            // SellerReview 
             builder.Entity<SellerReview>(e =>
             {
                 e.HasOne(sr => sr.Transaction)
@@ -147,7 +147,7 @@ namespace LiteratureClub.Data
                  .IsUnique();
             });
 
-            // ── PickupPointReview ──────────────────────────────────────────
+            // PickupPointReview 
             builder.Entity<PickupPointReview>(e =>
             {
                 e.HasOne(ppr => ppr.PickupPoint)
@@ -161,7 +161,7 @@ namespace LiteratureClub.Data
                  .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // ── Message ────────────────────────────────────────────────────
+            // Message 
             builder.Entity<Message>(e =>
             {
                 e.HasOne(m => m.Transaction)
@@ -180,7 +180,7 @@ namespace LiteratureClub.Data
                  .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // ── WatchlistItem ──────────────────────────────────────────────
+            // WatchlistItem 
             builder.Entity<WatchlistItem>(e =>
             {
                 e.HasOne(w => w.User)
@@ -198,7 +198,7 @@ namespace LiteratureClub.Data
                  .IsUnique();
             });
 
-            // ── Report ─────────────────────────────────────────────────────
+            // Report 
             builder.Entity<Report>(e =>
             {
                 e.HasOne(r => r.Reporter)
@@ -227,7 +227,7 @@ namespace LiteratureClub.Data
                  .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // ── TextbookRequest ────────────────────────────────────────────
+            // TextbookRequest 
             builder.Entity<TextbookRequest>(e =>
             {
                 e.HasOne(tr => tr.Requester)
@@ -236,7 +236,7 @@ namespace LiteratureClub.Data
                  .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // ── Donation ───────────────────────────────────────────────────
+            // Donation 
             builder.Entity<Donation>(e =>
             {
                 e.HasOne(d => d.Donor)
@@ -248,7 +248,7 @@ namespace LiteratureClub.Data
                  .HasColumnType("decimal(10,2)");
             });
 
-            // ── Announcement ───────────────────────────────────────────────
+            // Announcement
             builder.Entity<Announcement>(e =>
             {
                 e.HasOne(a => a.PostedByAdmin)
@@ -257,7 +257,7 @@ namespace LiteratureClub.Data
                  .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // ── PickupPoint ────────────────────────────────────────────────
+            // PickupPoint 
             builder.Entity<PickupPoint>(e =>
             {
                 e.HasOne(pp => pp.Campus)
@@ -266,7 +266,7 @@ namespace LiteratureClub.Data
                  .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // ── CourseCode ─────────────────────────────────────────────────
+            // CourseCode 
             builder.Entity<CourseCode>(e =>
             {
                 e.HasOne(cc => cc.Campus)
