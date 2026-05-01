@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Database
+// Database 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -30,7 +30,6 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
-// MVC 
 builder.Services.AddControllersWithViews();
 
 //Session
@@ -41,17 +40,30 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
+
 //Custom services 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<PayFastService>();
 builder.Services.AddScoped<EmailService>();
+
 
 // Authentication cookies
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Account/Login";
     options.LogoutPath = "/Account/Logout";
-    options.AccessDeniedPath = "/Account/AccessDenied";
+    options.AccessDeniedPath = "/Shared/AccessDenied";
+    options.ExpireTimeSpan = TimeSpan.FromDays(7);
+    options.SlidingExpiration = true;
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Account/Login";
+    options.LogoutPath = "/Account/Logout";
+    options.AccessDeniedPath = "/Account/AccessDenied"; // was /Shared/AccessDenied
     options.ExpireTimeSpan = TimeSpan.FromDays(7);
     options.SlidingExpiration = true;
     options.Cookie.HttpOnly = true;
@@ -60,6 +72,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 var app = builder.Build();
 
+// Ensure DB exists and seed 
 // Ensuring DB exists and seeding
 using (var scope = app.Services.CreateScope())
 {
@@ -67,7 +80,7 @@ using (var scope = app.Services.CreateScope())
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
     try
     {
-        await context.Database.EnsureCreatedAsync();
+        await context.Database.MigrateAsync();
         await DbSeeder.SeedAsync(scope.ServiceProvider);
     }
     catch (Exception ex)

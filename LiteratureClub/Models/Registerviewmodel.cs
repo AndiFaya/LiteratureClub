@@ -24,6 +24,8 @@ namespace LiteratureClub.ViewModels
         [Display(Name = "Student Number")]
         public string StudentNumber { get; set; } = string.Empty;
 
+
+        [RegularExpression(@"^[^@]+@[^@]+\.ac\.za$",ErrorMessage = "Please use a university email address ending in .ac.za")]
         [Required(ErrorMessage = "University email is required.")]
         [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
         [Display(Name = "University Email")]

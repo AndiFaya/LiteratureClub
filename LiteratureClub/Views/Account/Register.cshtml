@@ -70,7 +70,9 @@
     <div class="mb-3">
         <label asp-for="Email" class="form-label">University Email <span class="text-danger">*</span></label>
         <input asp-for="Email" class="form-control @(ViewData.ModelState[nameof(Model.Email)]?.Errors.Any() == true ? "is-invalid" : "")"
-               placeholder="you@university.ac.za" type="email" autocomplete="email" />
+                placeholder="you@university.ac.za" type="email" autocomplete="email"
+                title="Please use your university email ending in .ac.za" />
+        <div class="form-text">Must be a university address ending in <strong>.ac.za</strong></div>
         <span asp-validation-for="Email" class="invalid-feedback d-block"></span>
     </div>
 
@@ -138,9 +140,10 @@
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-    <script>
-    // Show/hide password toggle
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    @Html.Raw(@"<script>
     document.getElementById('togglePassword').addEventListener('click', function () {
         const input = document.getElementById('passwordInput');
         const isText = input.type === 'text';
@@ -167,5 +170,12 @@
         else if (score <= 3) { bar.className = 'progress-bar bg-warning'; label.textContent = 'Fair'; }
         else                 { bar.className = 'progress-bar bg-success'; label.textContent = 'Strong'; }
     });
-    </script>
+
+    document.querySelector('input[type=""email""]').addEventListener('blur', function () {
+        const acZaPattern = /^[^@]+@[^@]+\.ac\.za$/i;
+        const isValid = acZaPattern.test(this.value.trim());
+        this.classList.toggle('is-invalid', this.value.length > 0 && !isValid);
+        this.classList.toggle('is-valid',   this.value.length > 0 &&  isValid);
+    });
+    </script>")
 }
