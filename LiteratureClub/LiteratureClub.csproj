@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>BookSwap</RootNamespace>
     <AssemblyName>BookSwap</AssemblyName>
+    <UserSecretsId>71971dd2-34f5-4cd3-8ed8-6742e9de124a</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

@@ -216,8 +216,9 @@ namespace LiteratureClub.Controllers
         }
 
         
-               
-        //GET /Account/ResendVerification
+        [HttpGet]
+        public IActionResult ResendVerification() => View();
+
         [HttpGet]
         public IActionResult ResendVerification() => View();
 
