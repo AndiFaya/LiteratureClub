@@ -215,9 +215,6 @@ namespace LiteratureClub.Controllers
             return View("ConfirmEmailResult");
         }
 
-        
-        [HttpGet]
-        public IActionResult ResendVerification() => View();
 
         [HttpGet]
         public IActionResult ResendVerification() => View();
