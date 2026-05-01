@@ -219,11 +219,6 @@ namespace LiteratureClub.Controllers
         [HttpGet]
         public IActionResult ResendVerification() => View();
 
-        
-        //GET /Account/ResendVerification
-        [HttpGet]
-        public IActionResult ResendVerification() => View();
-
         //POST /Account/ResendVerification
         [HttpPost]
         [ValidateAntiForgeryToken]
