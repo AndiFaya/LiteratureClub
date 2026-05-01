@@ -11,10 +11,9 @@
     </div>
 }
 
-<!-- ── Hero ───────────────────────────────────────────────────────────── -->
+<!--Hero-->
 <div class="py-5 text-center mb-4 rounded-3"
      style="background:linear-gradient(135deg,#0d6efd11,#0d6efd22);">
-    <div style="font-size:52px" class="mb-2">📚</div>
     <h1 class="display-6 fw-bold mb-2">Buy &amp; Sell University Textbooks</h1>
     <p class="lead text-muted mb-4">
         Save money by buying from fellow students.<br />
@@ -36,7 +35,7 @@
     </div>
 </div>
 
-<!-- ── Stats strip ────────────────────────────────────────────────────── -->
+<!--Stats-->
 <div class="row g-3 text-center mb-5">
     <div class="col-4">
         <div class="fw-bold fs-4 text-primary">@ViewBag.TotalListings</div>
@@ -52,7 +51,7 @@
     </div>
 </div>
 
-<!-- ── How it works ───────────────────────────────────────────────────── -->
+<!--Platforms perksa-->
 <div class="row g-3 mb-5 text-center">
     <div class="col-md-4">
         <div class="card h-100 border-0 bg-light">
@@ -60,8 +59,7 @@
                 <div style="font-size:32px" class="mb-2">🔍</div>
                 <h6 class="fw-bold">Browse Listings</h6>
                 <p class="text-muted small mb-0">
-                    Search by title, author, ISBN, course code or category.
-                    Filter by condition and price.
+                    Search and find textbooks easily
                 </p>
             </div>
         </div>
@@ -72,8 +70,7 @@
                 <div style="font-size:32px" class="mb-2">💳</div>
                 <h6 class="fw-bold">Pay Securely</h6>
                 <p class="text-muted small mb-0">
-                    Payments go through PayFast — your details are never stored.
-                    Funds are held until you confirm the exchange.
+                    Payments go through PayFast so your details are never stored.
                 </p>
             </div>
         </div>
@@ -85,14 +82,13 @@
                 <h6 class="fw-bold">Exchange on Campus</h6>
                 <p class="text-muted small mb-0">
                     Meet at a safe campus pickup point.
-                    The seller enters your verification code to complete the sale.
                 </p>
             </div>
         </div>
     </div>
 </div>
 
-<!-- ── Recent listings ────────────────────────────────────────────────── -->
+<!--Displaying recent listings-->
 @if (Model.Any())
 {
     <div class="d-flex justify-content-between align-items-center mb-3">

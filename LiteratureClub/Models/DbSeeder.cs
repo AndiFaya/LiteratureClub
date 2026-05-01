@@ -15,7 +15,8 @@ namespace LiteratureClub.Data
 
             try
             {
-                // Roles 
+               
+                // Roles
                 foreach (var role in new[] { "Admin", "Student" })
                 {
                     if (!await roleManager.RoleExistsAsync(role))
@@ -26,6 +27,7 @@ namespace LiteratureClub.Data
                 }
 
                 // Campuses 
+                // Campuses
                 if (!await context.Campuses.AnyAsync())
                 {
                     context.Campuses.AddRange(
@@ -89,8 +91,8 @@ namespace LiteratureClub.Data
                     await context.SaveChangesAsync();
                     logger.LogInformation("Campuses seeded.");
                 }
-
-                // Textbook categories 
+              
+                // Textbook categories
                 if (!await context.TextbookCategories.AnyAsync())
                 {
                     context.TextbookCategories.AddRange(
@@ -112,6 +114,7 @@ namespace LiteratureClub.Data
                 }
 
                 // Course codes 
+    
                 if (!await context.CourseCodes.AnyAsync())
                 {
                     var campuses = await context.Campuses.ToListAsync();
@@ -137,7 +140,8 @@ namespace LiteratureClub.Data
                     logger.LogInformation("Course codes seeded.");
                 }
 
-                //  Pickup points 
+               
+                // Pickup points
                 if (!await context.PickupPoints.AnyAsync())
                 {
                     var campuses = await context.Campuses.ToListAsync();
@@ -152,7 +156,7 @@ namespace LiteratureClub.Data
                     logger.LogInformation("Pickup points seeded.");
                 }
 
-                // ── Admin account ──────────────────────────────────────────
+                //Admin account
                 const string adminEmail = "admin@LiteratureClub.co.za";
                 if (await userManager.FindByEmailAsync(adminEmail) == null)
                 {
@@ -170,7 +174,7 @@ namespace LiteratureClub.Data
                         CampusId        = firstCampus.Id,
                         IsActive        = true
                     };
-                    var result = await userManager.CreateAsync(admin, "Admin@BookSwap1!");
+                    var result = await userManager.CreateAsync(admin, "Admin@LiteratureClub1!");
                     if (result.Succeeded)
                     {
                         await userManager.AddToRoleAsync(admin, "Admin");

@@ -32,19 +32,19 @@ namespace LiteratureClub.Controllers
 
             if (user == null) return NotFound();
 
-            // ── Reviews ────────────────────────────────────────────────────
+            //Reviews
             var reviews = await _context.SellerReviews
                 .Where(r => r.SellerId == userId)
                 .ToListAsync();
 
-            // ── My listings ────────────────────────────────────────────────
+            //My listings
             var myListings = await _context.Listings
                 .Include(l => l.Bids)
                 .Where(l => l.SellerId == userId && l.Status != ListingStatus.Removed)
                 .OrderByDescending(l => l.CreatedAt)
                 .ToListAsync();
 
-            // ── Purchases ──────────────────────────────────────────────────
+            //Purchases
             var myPurchases = await _context.Transactions
                 .Include(t => t.Listing)
                 .Include(t => t.Seller)
@@ -53,7 +53,7 @@ namespace LiteratureClub.Controllers
                 .OrderByDescending(t => t.CreatedAt)
                 .ToListAsync();
 
-            // ── Sales ──────────────────────────────────────────────────────
+            //Sales
             var mySales = await _context.Transactions
                 .Include(t => t.Listing)
                 .Include(t => t.Buyer)
@@ -62,7 +62,7 @@ namespace LiteratureClub.Controllers
                 .OrderByDescending(t => t.CreatedAt)
                 .ToListAsync();
 
-            // ── Watchlist ──────────────────────────────────────────────────
+            //Watchlist
             var watchlist = await _context.WatchlistItems
                 .Include(w => w.Listing).ThenInclude(l => l.Seller)
                 .Include(w => w.Listing).ThenInclude(l => l.Category)
@@ -72,7 +72,7 @@ namespace LiteratureClub.Controllers
                 .OrderByDescending(w => w.AddedAt)
                 .ToListAsync();
 
-            // ── Incoming bids on my listings ───────────────────────────────
+            //Incoming bids on my listings
             var incomingBids = await _context.Bids
                 .Include(b => b.Listing)
                 .Include(b => b.Bidder)
@@ -81,7 +81,7 @@ namespace LiteratureClub.Controllers
                 .OrderByDescending(b => b.CreatedAt)
                 .ToListAsync();
 
-            // ── Unread messages ────────────────────────────────────────────
+            //Unread messages
             var unreadMessages = await _context.Messages
                 .CountAsync(m => m.ReceiverId == userId && !m.IsRead);
 

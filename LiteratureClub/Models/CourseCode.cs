@@ -8,7 +8,7 @@ namespace LiteratureClub.Models
 
         [Required]
         [MaxLength(20)]
-        public string Code { get; set; } = string.Empty;       // e.g. "CS101"
+        public string Code { get; set; } = string.Empty;   
 
         [Required]
         [MaxLength(200)]

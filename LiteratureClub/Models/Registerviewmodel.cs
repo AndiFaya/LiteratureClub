@@ -53,13 +53,13 @@ namespace LiteratureClub.ViewModels
         [Display(Name = "Campus")]
         public int CampusId { get; set; }
 
-        // Populated from DB for the campus dropdown
+        // from DB for the campus dropdown
         public List<CampusOption> Campuses { get; set; } = new();
     }
 
     public class CampusOption
     {
         public int Id { get; set; }
-        public string DisplayName { get; set; } = string.Empty; // "University – Campus"
+        public string DisplayName { get; set; } = string.Empty; // "University Campus"
     }
 }

@@ -6,7 +6,7 @@ namespace LiteratureClub.ViewModels
 {
     public class ListingFormViewModel
     {
-        public int Id { get; set; } // 0 for Create, >0 for Edit
+        public int Id { get; set; }
 
         [Required(ErrorMessage = "ISBN is required.")]
         [MaxLength(20)]
@@ -70,6 +70,7 @@ namespace LiteratureClub.ViewModels
         [DataType(DataType.DateTime)]
         public DateTime? BidExpiresAt { get; set; }
 
+        [Required(ErrorMessage = "An image of the textbook is required.")]
         [Display(Name = "Book Cover Image")]
         public IFormFile? ImageFile { get; set; }
 
@@ -86,7 +87,7 @@ namespace LiteratureClub.ViewModels
         public string Label { get; set; } = string.Empty;
     }
 
-    // ── Browse / Index ─────────────────────────────────────────────────────
+    //Browse
     public class ListingIndexViewModel
     {
         public List<ListingCardViewModel> Listings { get; set; } = new();
@@ -121,7 +122,7 @@ namespace LiteratureClub.ViewModels
         public DateTime CreatedAt { get; set; }
     }
 
-    // ── Detail ─────────────────────────────────────────────────────────────
+    //Detail 
     public class ListingDetailViewModel
     {
         public int Id { get; set; }
@@ -154,7 +155,7 @@ namespace LiteratureClub.ViewModels
         public bool IsOwnListing { get; set; }
         public bool IsWatchlisted { get; set; }
 
-        // Bids on this listing (visible to seller)
+        // Bids on the listing 
         public List<BidSummaryViewModel> Bids { get; set; } = new();
     }
 

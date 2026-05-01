@@ -31,7 +31,7 @@ namespace LiteratureClub.Controllers
             _logger = logger;
         }
 
-        // ── POST /Transactions/Initiate  (Buy Now) ─────────────────────────
+        //POST /Transactions/Initiate  (Buy Now)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Initiate(int listingId)
@@ -59,7 +59,7 @@ namespace LiteratureClub.Controllers
             return await CreateTransactionAndRedirect(listing, buyerId, listing.Price);
         }
 
-        // ── GET /Transactions/InitiateFromBid  (seller accepts bid) ────────
+        // GET (seller accepts bid)
         [HttpGet]
         public async Task<IActionResult> InitiateFromBid(int bidId)
         {
@@ -82,7 +82,7 @@ namespace LiteratureClub.Controllers
                 bid.Listing, bid.BidderId, bid.OfferAmount);
         }
 
-        // ── GET /Transactions/Pay/{id}  (PayFast redirect page) ────────────
+        // ── GET (PayFast redirect page)
         [HttpGet]
         public async Task<IActionResult> Pay(int id)
         {
@@ -118,11 +118,7 @@ namespace LiteratureClub.Controllers
             return View();
         }
 
-        // ── GET /Transactions/PaymentReturn/{id} ────────────────────────────
         // PayFast redirects the BROWSER here after payment.
-        // Since PayFast sandbox can't reach localhost for ITN, we also confirm
-        // the payment here. In production with a live URL the ITN callback
-        // fires first and this acts as a safe fallback.
         [HttpGet]
         [AllowAnonymous]
         public async Task<IActionResult> PaymentReturn(int id)
@@ -135,7 +131,7 @@ namespace LiteratureClub.Controllers
 
             if (transaction == null) return NotFound();
 
-            // Only confirm if still pending (ITN may have already confirmed it)
+            // Only confirm if still pending
             if (transaction.Status == TransactionStatus.PaymentPending)
             {
                 await ConfirmPaymentAsync(transaction,
@@ -146,7 +142,7 @@ namespace LiteratureClub.Controllers
             return RedirectToAction("Detail", new { id });
         }
 
-        // ── GET /Transactions/PaymentCancel/{id} ────────────────────────────
+        //GET Transactions/PaymentCancel
         [HttpGet]
         [AllowAnonymous]
         public async Task<IActionResult> PaymentCancel(int id)
@@ -155,7 +151,7 @@ namespace LiteratureClub.Controllers
             return RedirectToAction("Detail", new { id });
         }
 
-        // ── POST /Transactions/ItnCallback  (PayFast server-to-server) ─────
+        //POST /Transactions/ItnCallback  (PayFast server-to-server)
         [HttpPost]
         [AllowAnonymous]
         [IgnoreAntiForgeryToken]
@@ -193,7 +189,7 @@ namespace LiteratureClub.Controllers
             return Ok();
         }
 
-        // ── GET /Transactions/Detail/{id} ───────────────────────────────────
+        //GET /Transactions/Detail/
         [HttpGet]
         public async Task<IActionResult> Detail(int id)
         {
@@ -215,7 +211,7 @@ namespace LiteratureClub.Controllers
             return View(transaction);
         }
 
-        // ── POST /Transactions/VerifyExchange ───────────────────────────────
+        //POST /Transactions/VerifyExchange
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> VerifyExchange(int transactionId, string code)
@@ -287,7 +283,7 @@ namespace LiteratureClub.Controllers
             return RedirectToAction("Receipt", new { id = transactionId });
         }
 
-        // ── GET /Transactions/Receipt/{id} ──────────────────────────────────
+        //GET /Transactions/Receipt
         [HttpGet]
         public async Task<IActionResult> Receipt(int id)
         {
@@ -309,7 +305,7 @@ namespace LiteratureClub.Controllers
             return View(transaction.Receipt);
         }
 
-        // ── Shared: confirm payment, generate code, email buyer ─────────────
+        //Shared: confirm payment, generate code, email buyer
         private async Task ConfirmPaymentAsync(
             Transaction transaction, string paymentReference)
         {
