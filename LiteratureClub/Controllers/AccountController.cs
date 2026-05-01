@@ -333,9 +333,12 @@ namespace LiteratureClub.Controllers
 
 
         [HttpGet]
-        public IActionResult AccessDenied() => View();
+        public IActionResult AccessDenied()
+        {
+            return View();
+        }
 
-        
+
         private async Task<List<CampusOption>> GetCampusOptionsAsync()
         {
             try
