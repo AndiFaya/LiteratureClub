@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace BookSwap.Controllers
+namespace LiteratureClub.Controllers
 {
     public class WantedAdsController : Controller
     {
