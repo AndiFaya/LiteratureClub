@@ -48,16 +48,16 @@ builder.Services.AddScoped<EmailService>();
 
 
 // Authentication cookies
-builder.Services.ConfigureApplicationCookie(options =>
-{
-    options.LoginPath = "/Account/Login";
-    options.LogoutPath = "/Account/Logout";
-    options.AccessDeniedPath = "/Shared/AccessDenied";
-    options.ExpireTimeSpan = TimeSpan.FromDays(7);
-    options.SlidingExpiration = true;
-    options.Cookie.HttpOnly = true;
-    options.Cookie.IsEssential = true;
-});
+//builder.Services.ConfigureApplicationCookie(options =>
+//{
+//    options.LoginPath = "/Account/Login";
+//    options.LogoutPath = "/Account/Logout";
+//    options.AccessDeniedPath = "/Shared/AccessDenied";
+//    options.ExpireTimeSpan = TimeSpan.FromDays(7);
+//    options.SlidingExpiration = true;
+//    options.Cookie.HttpOnly = true;
+//    options.Cookie.IsEssential = true;
+//});
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -68,6 +68,14 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.SlidingExpiration = true;
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
+});
+
+//Named authorization policy for admin-only access
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("StudentOnly", policy => policy.RequireRole("Student"));
+    options.AddPolicy("AdminOrStudent", policy => policy.RequireRole("Admin", "Student"));
 });
 
 var app = builder.Build();
