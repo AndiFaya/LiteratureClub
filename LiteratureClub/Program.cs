@@ -48,17 +48,6 @@ builder.Services.AddScoped<EmailService>();
 
 
 // Authentication cookies
-//builder.Services.ConfigureApplicationCookie(options =>
-//{
-//    options.LoginPath = "/Account/Login";
-//    options.LogoutPath = "/Account/Logout";
-//    options.AccessDeniedPath = "/Shared/AccessDenied";
-//    options.ExpireTimeSpan = TimeSpan.FromDays(7);
-//    options.SlidingExpiration = true;
-//    options.Cookie.HttpOnly = true;
-//    options.Cookie.IsEssential = true;
-//});
-
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Account/Login";
@@ -113,6 +102,9 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseSession();
 app.UseAuthentication();
+app.UseAuthentication();
+
+app.UseAuthorization();
 app.UseAuthorization();
 
 app.MapControllerRoute(

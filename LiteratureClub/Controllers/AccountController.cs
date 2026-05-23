@@ -222,17 +222,26 @@ namespace LiteratureClub.Controllers
 
             try
             {
-                var normalizedEmail = vm.Email.Trim().ToLower();
+                // 1. Find the user by their email field first using UserManager
+                var user = await _userManager.FindByEmailAsync(vm.Email.Trim());
 
-                // Secure password checking natively through Identity via string matching
+                if (user == null)
+                {
+                    ModelState.AddModelError(string.Empty, "Invalid email or password.");
+                    return View(vm);
+                }
+
+                // 2. Use the exact username stored in the DB record to sign in safely
                 var result = await _signInManager.PasswordSignInAsync(
-                    normalizedEmail, vm.Password, vm.RememberMe, lockoutOnFailure: true);
+                    user.UserName!,
+                    vm.Password,
+                    vm.RememberMe,
+                    lockoutOnFailure: true
+                );
 
                 if (result.Succeeded)
                 {
-                    var user = await _userManager.FindByEmailAsync(normalizedEmail);
-
-                    if (user != null && !user.IsActive)
+                    if (!user.IsActive)
                     {
                         await _signInManager.SignOutAsync();
                         ModelState.AddModelError(string.Empty, "This account has been suspended.");
