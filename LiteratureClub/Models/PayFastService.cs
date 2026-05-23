@@ -1,23 +1,27 @@
-﻿using System.Net;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
 
 namespace LiteratureClub.Services
 {
     public class PayFastService
     {
-        private const string MerchantId = "10048004";
-        private const string MerchantKey = "20612d2htvq35";
-        private const string Passphrase = "SomSOM-26BAR";
-        private const string SandboxUrl = "https://sandbox.payfast.co.za/eng/process";
-
+        private readonly IConfiguration _config;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger<PayFastService> _logger;
 
+        // Read from appsettings.json
+        private string MerchantId => _config["PayFast:MerchantId"] ?? "";
+        private string MerchantKey => _config["PayFast:MerchantKey"] ?? "";
+        private string Passphrase => _config["PayFast:Passphrase"] ?? "";
+        private string SandboxUrl => _config["PayFast:SandboxUrl"]
+                                   ?? "https://sandbox.payfast.co.za/eng/process";
+
         public PayFastService(
+            IConfiguration config,
             IHttpContextAccessor httpContextAccessor,
             ILogger<PayFastService> logger)
         {
+            _config = config;
             _httpContextAccessor = httpContextAccessor;
             _logger = logger;
         }
@@ -29,6 +33,7 @@ namespace LiteratureClub.Services
             var request = _httpContextAccessor.HttpContext!.Request;
             var baseUrl = $"{request.Scheme}://{request.Host}";
 
+            // Field ORDER matches PayFast docs — do not reorder
             var data = new Dictionary<string, string>
             {
                 ["merchant_id"] = MerchantId,
@@ -36,36 +41,54 @@ namespace LiteratureClub.Services
                 ["return_url"] = $"{baseUrl}/Transactions/PaymentReturn/{transactionId}",
                 ["cancel_url"] = $"{baseUrl}/Transactions/PaymentCancel/{transactionId}",
                 ["notify_url"] = $"{baseUrl}/Transactions/ItnCallback",
-                ["name_first"] = buyerFirstName,
-                ["name_last"] = buyerLastName,
-                ["email_address"] = buyerEmail,
+                ["name_first"] = buyerFirstName.Trim(),
+                ["name_last"] = buyerLastName.Trim(),
+                ["email_address"] = buyerEmail.Trim(),
                 ["m_payment_id"] = transactionId.ToString(),
-                ["amount"] = amount.ToString("F2"),
-                ["item_name"] = itemName.Length > 100 ? itemName[..100] : itemName,
+                ["amount"] = amount.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture),
+                ["item_name"] = (itemName.Length > 100 ? itemName[..100] : itemName).Trim(),
             };
 
             data["signature"] = GenerateSignature(data);
-            _logger.LogDebug("PayFast signature generated for TXN {Id}", transactionId);
+
+            _logger.LogInformation("=== PayFast Fields ===");
+            foreach (var kv in data)
+                _logger.LogInformation("  {K} = {V}", kv.Key, kv.Value);
+
             return data;
+        }
+
+        // Expose the raw signature string for the diagnostic view
+        public string GetSignatureString(Dictionary<string, string> data)
+        {
+            var parts = data
+                .Where(kv => kv.Key != "signature" &&
+                             !string.IsNullOrEmpty(kv.Value?.Trim()))
+                .Select(kv => $"{kv.Key}={PhpUrlEncode(kv.Value.Trim())}");
+
+            var s = string.Join("&", parts);
+            if (!string.IsNullOrEmpty(Passphrase))
+                s += $"&passphrase={PhpUrlEncode(Passphrase.Trim())}";
+            return s;
         }
 
         public bool VerifyItn(IFormCollection form)
         {
-            var sb = new StringBuilder();
+            var parts = new List<string>();
             foreach (var key in form.Keys.Where(k => k != "signature"))
             {
-                var val = form[key].ToString();
+                var val = form[key].ToString().Trim();
                 if (!string.IsNullOrEmpty(val))
-                {
-                    if (sb.Length > 0) sb.Append('&');
-                    sb.Append($"{PhpUrlEncode(key)}={PhpUrlEncode(val)}");
-                }
+                    parts.Add($"{key}={PhpUrlEncode(val)}");
             }
-            sb.Append($"&passphrase={PhpUrlEncode(Passphrase)}");
 
-            var expected = ComputeMd5(sb.ToString());
+            var paramString = string.Join("&", parts);
+            if (!string.IsNullOrEmpty(Passphrase))
+                paramString += $"&passphrase={PhpUrlEncode(Passphrase.Trim())}";
+
+            var expected = Md5(paramString);
             var received = form["signature"].ToString();
-            _logger.LogDebug("ITN — expected: {E}  received: {R}", expected, received);
+            _logger.LogInformation("ITN — expected: {E}  received: {R}", expected, received);
             return string.Equals(expected, received, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -73,20 +96,45 @@ namespace LiteratureClub.Services
 
         private string GenerateSignature(Dictionary<string, string> data)
         {
-            var sb = new StringBuilder();
-            foreach (var kv in data.Where(kv => kv.Key != "signature" && !string.IsNullOrEmpty(kv.Value)))
-            {
-                if (sb.Length > 0) sb.Append('&');
-                sb.Append($"{PhpUrlEncode(kv.Key)}={PhpUrlEncode(kv.Value)}");
-            }
-            sb.Append($"&passphrase={PhpUrlEncode(Passphrase)}");
-            return ComputeMd5(sb.ToString());
+            // IMPORTANT: only encode VALUES, not keys (matches PHP SDK exactly)
+            var parts = data
+                .Where(kv => kv.Key != "signature" &&
+                             !string.IsNullOrEmpty(kv.Value?.Trim()))
+                .Select(kv => $"{kv.Key}={PhpUrlEncode(kv.Value.Trim())}");
+
+            var s = string.Join("&", parts);
+            if (!string.IsNullOrEmpty(Passphrase))
+                s += $"&passphrase={PhpUrlEncode(Passphrase.Trim())}";
+
+            _logger.LogInformation("Signature input: {S}", s);
+            return Md5(s);
         }
 
-        private static string PhpUrlEncode(string value) =>
-            WebUtility.UrlEncode(value) ?? string.Empty;
+        // Replicates PHP urlencode() exactly:
+        //   safe set: A-Z a-z 0-9 - _ .
+        //   space → +
+        //   all else → %XX  (WebUtility.UrlEncode leaves ! * ( ) ' unencoded;
+        //                     PHP encodes them — this is the bug in your old code)
+        private static string PhpUrlEncode(string value)
+        {
+            if (string.IsNullOrEmpty(value)) return string.Empty;
+            var sb = new StringBuilder(value.Length * 3);
+            foreach (char c in value)
+            {
+                if (c == ' ')
+                    sb.Append('+');
+                else if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
+                         (c >= '0' && c <= '9') ||
+                         c == '-' || c == '_' || c == '.')
+                    sb.Append(c);
+                else
+                    foreach (var b in Encoding.UTF8.GetBytes(c.ToString()))
+                        sb.Append('%').Append(b.ToString("X2"));
+            }
+            return sb.ToString();
+        }
 
-        private static string ComputeMd5(string input)
+        private static string Md5(string input)
         {
             var bytes = MD5.HashData(Encoding.UTF8.GetBytes(input));
             return Convert.ToHexString(bytes).ToLower();
