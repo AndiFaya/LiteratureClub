@@ -13,6 +13,15 @@
         </div>
     </div>
 
+    @* Placed inside the container box so it doesn't break layout spacing *@
+    @if (!User.Identity.IsAuthenticated)
+    {
+        <div class="alert alert-info text-center m-2 shadow-sm border-0">
+            <h6 class="mb-1">💡 Want to check your orders or listings?</h6>
+            <small class="text-muted">Please <a href="/Account/Login" class="fw-bold text-decoration-underline">Login</a> to unlock personalized account assistance.</small>
+        </div>
+    }
+
     <div class="chat-input-area">
         <input type="text" id="chatInput" placeholder="Type your message..." maxlength="4000" />
         <button type="button" id="btnSend">Send</button>
@@ -22,7 +31,7 @@
 @section Scripts
 {
     <script>
-        // Simple flow: User types → Send to /Chat/SendMessage → Display reply
+        // Simple flow: User types - Send to /Chat/SendMessage → Display reply
         document.getElementById('btnSend').onclick = sendMessage;
         document.getElementById('chatInput').onkeydown = function(e) {
             if (e.key === 'Enter') { e.preventDefault(); sendMessage(); }
@@ -31,7 +40,6 @@
         function addMessage(role, text, isError) {
             document.getElementById('chatWelcome').style.display = 'none';
             var div = document.createElement('div');
-            // Ensure the CSS uses 'ai-agent' if matching the data role string
             div.className = 'chat-message ' + (role === 'user' ? 'user' : 'ai-agent') + (isError ? ' chat-error' : '');
             div.innerHTML = '<span class="chat-avatar">' + (role === 'user' ? 'U' : 'AI') + '</span><span class="chat-text">' + text + '</span>';
             document.getElementById('chatMessages').appendChild(div);
@@ -50,13 +58,11 @@
             for (var i = 0; i < msgs.length; i++) {
                 var el = msgs[i];
                 var txt = el.querySelector('.chat-text').textContent;
-
-                // FIXED: Changed 'assistant' to 'ai agent' to match your ChatService mapping constraints
                 var assignedRole = el.classList.contains('user') ? 'user' : 'ai agent';
                 history.push({ role: assignedRole, content: txt });
             }
 
-            // 2. Now add the fresh user prompt string to the screen layout
+            // 2. add the fresh user prompt string to the screen layout
             input.value = '';
             addMessage('user', text);
 
@@ -75,7 +81,6 @@
 
                 var data = await res.json();
 
-                // FIXED: Changed data.isError to data.error to match your C# model property signature
                 if (data.success) {
                     addMessage('ai agent', data.message, false);
                 } else {
