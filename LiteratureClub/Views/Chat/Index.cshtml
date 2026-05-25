@@ -1,0 +1,21 @@
+﻿@* CHATBOT UI - User types here, JavaScript sends to controller, displays AI reply *@
+
+@{
+    ViewData["Title"] = "ChatBot";
+}
+
+@Html.AntiForgeryToken()
+
+<div class="chat-container">
+    <div class="chat-messages" id="chatMessages">
+        <div class="chat-welcome" id="chatWelcome">
+            <h2>How can I help you today? </h2>
+            <p>Type your question below and press Enter.</p>
+        </div>
+    </div>
+
+    <div class="chat-input-area">
+        <input type="text" id="chatInput" placeholder="Type your message..." maxlength= "4000" />
+        <button type="button" id="btnSend">Send</button>
+    </div>
+</div>
