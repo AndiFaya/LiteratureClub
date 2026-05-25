@@ -1,7 +1,6 @@
-﻿@* CHATBOT UI - User types here, JavaScript sends to controller, displays AI reply *@
-
+﻿@* STEP 4: Chat UI - User types here, JavaScript sends to controller, displays AI reply *@
 @{
-    ViewData["Title"] = "ChatBot";
+    ViewData["Title"] = "Chat";
 }
 
 @Html.AntiForgeryToken()
@@ -9,75 +8,87 @@
 <div class="chat-container">
     <div class="chat-messages" id="chatMessages">
         <div class="chat-welcome" id="chatWelcome">
-            <h2>How can I help you today? </h2>
+            <h2>How can I help you today?</h2>
             <p>Type your question below and press Enter.</p>
         </div>
     </div>
 
     <div class="chat-input-area">
-        <input type="text" id="chatInput" placeholder="Type your message..." maxlength= "4000" />
+        <input type="text" id="chatInput" placeholder="Type your message..." maxlength="4000" />
         <button type="button" id="btnSend">Send</button>
     </div>
 </div>
 
-@section Scripts 
+@section Scripts
 {
     <script>
-
-        //
+        // Simple flow: User types → Send to /Chat/SendMessage → Display reply
         document.getElementById('btnSend').onclick = sendMessage;
-        document.getElementById('chatInput').onkeydown = function(e){
-            if (e.key === 'Enter') 
-            {
-                e.preventDefault(); sendMessage(); 
-            }
+        document.getElementById('chatInput').onkeydown = function(e) {
+            if (e.key === 'Enter') { e.preventDefault(); sendMessage(); }
         };
 
         function addMessage(role, text, isError) {
             document.getElementById('chatWelcome').style.display = 'none';
             var div = document.createElement('div');
-            div.className = 'chat-message' + role + (isError ? ' chat-error' : '');
-            div.innerHTML = '<span className="chat-avatar">' + (role === 'user' ? 'U' : 'AI') + '</span><span class="chat-text">' + text + '</span>';
+            // Ensure the CSS uses 'ai-agent' if matching the data role string
+            div.className = 'chat-message ' + (role === 'user' ? 'user' : 'ai-agent') + (isError ? ' chat-error' : '');
+            div.innerHTML = '<span class="chat-avatar">' + (role === 'user' ? 'U' : 'AI') + '</span><span class="chat-text">' + text + '</span>';
             document.getElementById('chatMessages').appendChild(div);
-            div.scrollIntoView();
+            div.scrollIntoView({ behavior: 'smooth' });
         }
 
         async function sendMessage() {
             var input = document.getElementById('chatInput');
-            var message = input.value.trim();
+            var text = input.value.trim();
 
-            if (!message) return;
-            addMessage('user', message);
-            input.value = '';
+            if (!text) return;
 
-            //Build History (all messages except the new one)
+            // 1. Build history BEFORE adding the brand new user message to the DOM layout tree
             var history = [];
             var msgs = document.querySelectorAll('.chat-message');
             for (var i = 0; i < msgs.length; i++) {
-                var el = msgs[i], txt = el.querySelector('.chat-text').textContent;
-                history.push({ role: el.classList.contains('user') ? 'User' : 'assistant', content: txt });
+                var el = msgs[i];
+                var txt = el.querySelector('.chat-text').textContent;
+
+                // FIXED: Changed 'assistant' to 'ai agent' to match your ChatService mapping constraints
+                var assignedRole = el.classList.contains('user') ? 'user' : 'ai agent';
+                history.push({ role: assignedRole, content: txt });
             }
 
+            // 2. Now add the fresh user prompt string to the screen layout
+            input.value = '';
+            addMessage('user', text);
+
             document.getElementById('btnSend').disabled = true;
+
             try {
                 var token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-                var resp = await fetch('@Url.Action("Chat", "Chat")', {
+                var res = await fetch('/Chat/SendMessage', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
-                    body: JSON.stringify({ history: history })
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': token
+                    },
+                    body: JSON.stringify({ message: text, history: history })
                 });
 
-                var data = await resp.json();
+                var data = await res.json();
 
-                addMessage('assistant', data.success ? data.message : (data.isError || 'Error'), !data.success);
-            } catch (e) {
-                addMessage('assistant', 'An error occurred while processing your request.', true);
-            } 
-
-            document.getElementById('btnSend').disabled = false;
-            
+                // FIXED: Changed data.isError to data.error to match your C# model property signature
+                if (data.success) {
+                    addMessage('ai agent', data.message, false);
+                } else {
+                    addMessage('ai agent', data.error || 'An unexpected server error occurred.', true);
+                }
+            }
+            catch (e) {
+                addMessage('ai agent', 'Connection Failed. Please verify your server connection.', true);
+            }
+            finally {
+                document.getElementById('btnSend').disabled = false;
+                document.getElementById('chatInput').focus();
+            }
         }
-
-
     </script>
 }

@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using LiteratureClub.Models;
 using LiteratureClub.Services;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace LiteratureClub.Controllers
 {
@@ -21,7 +23,7 @@ namespace LiteratureClub.Controllers
         //Called when user clicks send button - Get AI reply and returns JSON
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SenndMessage([FromBody] ChatRequest request,
+        public async Task<IActionResult> SendMessage([FromBody] ChatRequest request,
             CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(request?.Message))

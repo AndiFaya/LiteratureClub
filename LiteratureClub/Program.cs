@@ -46,6 +46,7 @@ builder.Services.AddSession(options =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<PayFastService>();
 builder.Services.AddScoped<EmailService>();
+builder.Services.AddScoped<ChatService>();
 
 
 // Authentication cookies
