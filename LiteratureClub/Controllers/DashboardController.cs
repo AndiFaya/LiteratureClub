@@ -44,6 +44,11 @@ namespace LiteratureClub.Controllers
                 .OrderByDescending(l => l.CreatedAt)
                 .ToListAsync();
 
+            var myReviewedTransactionIds = await _context.SellerReviews
+                .Where(r => r.ReviewerId == userId)
+                .Select(r => r.TransactionId)
+                .ToListAsync();
+
             //Purchases
             var myPurchases = await _context.Transactions
                 .Include(t => t.Listing)
@@ -87,80 +92,85 @@ namespace LiteratureClub.Controllers
 
             var vm = new DashboardViewModel
             {
-                DisplayUsername   = user.DisplayUsername,
-                FullName          = $"{user.FirstName} {user.LastName}",
-                Email             = user.Email ?? string.Empty,
-                Campus            = $"{user.Campus.University} – {user.Campus.Name}",
-                EarningsBalance   = user.EarningsBalance,
-                AverageRating     = reviews.Count > 0 ? reviews.Average(r => r.Rating) : 0,
-                TotalReviews      = reviews.Count,
+                DisplayUsername = user.DisplayUsername,
+                FullName = $"{user.FirstName} {user.LastName}",
+                Email = user.Email ?? string.Empty,
+                Campus = $"{user.Campus.University} – {user.Campus.Name}",
+                EarningsBalance = user.EarningsBalance,
+                AverageRating = reviews.Count > 0 ? reviews.Average(r => r.Rating) : 0,
+                TotalReviews = reviews.Count,
 
                 ActiveListingsCount = myListings.Count(l => l.Status == ListingStatus.Available),
-                TotalSalesCount     = mySales.Count,
+                TotalSalesCount = mySales.Count,
                 TotalPurchasesCount = myPurchases.Count,
-                PendingBidsCount    = incomingBids.Count,
-                WatchlistCount      = watchlist.Count,
+                PendingBidsCount = incomingBids.Count,
+                WatchlistCount = watchlist.Count,
                 UnreadMessagesCount = unreadMessages,
 
                 MyListings = myListings.Select(l => new DashboardListingRow
                 {
-                    Id        = l.Id,
-                    Title     = l.Title,
-                    Price     = l.Price,
-                    Status    = l.Status,
-                    BidCount  = l.Bids.Count(b => b.Status == BidStatus.Pending),
+                    Id = l.Id,
+                    Title = l.Title,
+                    Price = l.Price,
+                    Status = l.Status,
+                    BidCount = l.Bids.Count(b => b.Status == BidStatus.Pending),
                     CreatedAt = l.CreatedAt
                 }).ToList(),
 
                 MyPurchases = myPurchases.Select(t => new DashboardTransactionRow
                 {
-                    Id                  = t.Id,
-                    BookTitle           = t.Listing.Title,
-                    Amount              = t.Amount,
-                    Status              = t.Status,
-                    OtherPartyUsername  = t.Seller.DisplayUsername,
-                    CreatedAt           = t.CreatedAt,
-                    HasReceipt          = t.Receipt != null
+                    Id = t.Id,
+                    BookTitle = t.Listing.Title,
+                    Amount = t.Amount,
+                    Status = t.Status,
+                    OtherPartyUsername = t.Seller.DisplayUsername,
+                    OtherPartyId = t.SellerId,
+                    CreatedAt = t.CreatedAt,
+                    HasReceipt = t.Receipt != null,
+                    HasReview = myReviewedTransactionIds.Contains(t.Id),
+                    CanReview = t.Status == TransactionStatus.Completed
+                                          && t.SellerId != userId
+                                          && !myReviewedTransactionIds.Contains(t.Id)
                 }).ToList(),
 
                 MySales = mySales.Select(t => new DashboardTransactionRow
                 {
-                    Id                  = t.Id,
-                    BookTitle           = t.Listing.Title,
-                    Amount              = t.Amount,
-                    Status              = t.Status,
-                    OtherPartyUsername  = t.Buyer.DisplayUsername,
-                    CreatedAt           = t.CreatedAt,
-                    HasReceipt          = t.Receipt != null
+                    Id = t.Id,
+                    BookTitle = t.Listing.Title,
+                    Amount = t.Amount,
+                    Status = t.Status,
+                    OtherPartyUsername = t.Buyer.DisplayUsername,
+                    CreatedAt = t.CreatedAt,
+                    HasReceipt = t.Receipt != null
                 }).ToList(),
 
                 Watchlist = watchlist.Select(w => new ListingCardViewModel
                 {
-                    Id               = w.Listing.Id,
-                    Title            = w.Listing.Title,
-                    Author           = w.Listing.Author,
-                    Edition          = w.Listing.Edition,
-                    Price            = w.Listing.Price,
-                    Condition        = w.Listing.Condition,
-                    Format           = w.Listing.Format,
-                    ImagePath        = w.Listing.ImagePath,
-                    SellerUsername   = w.Listing.Seller.DisplayUsername,
-                    CategoryName     = w.Listing.Category.Name,
-                    CourseCode       = w.Listing.CourseCode.Code,
+                    Id = w.Listing.Id,
+                    Title = w.Listing.Title,
+                    Author = w.Listing.Author,
+                    Edition = w.Listing.Edition,
+                    Price = w.Listing.Price,
+                    Condition = w.Listing.Condition,
+                    Format = w.Listing.Format,
+                    ImagePath = w.Listing.ImagePath,
+                    SellerUsername = w.Listing.Seller.DisplayUsername,
+                    CategoryName = w.Listing.Category.Name,
+                    CourseCode = w.Listing.CourseCode.Code,
                     IsOpenForBidding = w.Listing.IsOpenForBidding,
-                    CreatedAt        = w.Listing.CreatedAt
+                    CreatedAt = w.Listing.CreatedAt
                 }).ToList(),
 
                 IncomingBids = incomingBids.Select(b => new DashboardBidRow
                 {
-                    BidId           = b.Id,
-                    ListingId       = b.ListingId,
-                    ListingTitle    = b.Listing.Title,
-                    BidderUsername  = b.Bidder.DisplayUsername,
-                    OfferAmount     = b.OfferAmount,
-                    Quantity        = b.Quantity,
-                    Status          = b.Status,
-                    ExpiresAt       = b.ExpiresAt
+                    BidId = b.Id,
+                    ListingId = b.ListingId,
+                    ListingTitle = b.Listing.Title,
+                    BidderUsername = b.Bidder.DisplayUsername,
+                    OfferAmount = b.OfferAmount,
+                    Quantity = b.Quantity,
+                    Status = b.Status,
+                    ExpiresAt = b.ExpiresAt
                 }).ToList()
             };
 

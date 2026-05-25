@@ -21,7 +21,7 @@ namespace LiteratureClub.ViewModels
         public int WatchlistCount { get; set; }
         public int UnreadMessagesCount { get; set; }
 
-        
+
         public List<DashboardListingRow> MyListings { get; set; } = new();
 
         public List<DashboardTransactionRow> MyPurchases { get; set; } = new();
@@ -50,8 +50,11 @@ namespace LiteratureClub.ViewModels
         public decimal Amount { get; set; }
         public TransactionStatus Status { get; set; }
         public string OtherPartyUsername { get; set; } = string.Empty;
+        public string OtherPartyId { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
         public bool HasReceipt { get; set; }
+        public bool HasReview { get; set; }
+        public bool CanReview { get; set; } // true = completed + not self + not yet reviewed
     }
 
     public class DashboardBidRow
