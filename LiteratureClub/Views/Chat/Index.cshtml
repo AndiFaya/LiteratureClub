@@ -19,3 +19,65 @@
         <button type="button" id="btnSend">Send</button>
     </div>
 </div>
+
+@section Scripts 
+{
+    <script>
+
+        //
+        document.getElementById('btnSend').onclick = sendMessage;
+        document.getElementById('chatInput').onkeydown = function(e){
+            if (e.key === 'Enter') 
+            {
+                e.preventDefault(); sendMessage(); 
+            }
+        };
+
+        function addMessage(role, text, isError) {
+            document.getElementById('chatWelcome').style.display = 'none';
+            var div = document.createElement('div');
+            div.className = 'chat-message' + role + (isError ? ' chat-error' : '');
+            div.innerHTML = '<span className="chat-avatar">' + (role === 'user' ? 'U' : 'AI') + '</span><span class="chat-text">' + text + '</span>';
+            document.getElementById('chatMessages').appendChild(div);
+            div.scrollIntoView();
+        }
+
+        async function sendMessage() {
+            var input = document.getElementById('chatInput');
+            var message = input.value.trim();
+
+            if (!message) return;
+            addMessage('user', message);
+            input.value = '';
+
+            //Build History (all messages except the new one)
+            var history = [];
+            var msgs = document.querySelectorAll('.chat-message');
+            for (var i = 0; i < msgs.length; i++) {
+                var el = msgs[i], txt = el.querySelector('.chat-text').textContent;
+                history.push({ role: el.classList.contains('user') ? 'User' : 'assistant', content: txt });
+            }
+
+            document.getElementById('btnSend').disabled = true;
+            try {
+                var token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                var resp = await fetch('@Url.Action("Chat", "Chat")', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+                    body: JSON.stringify({ history: history })
+                });
+
+                var data = await resp.json();
+
+                addMessage('assistant', data.success ? data.message : (data.isError || 'Error'), !data.success);
+            } catch (e) {
+                addMessage('assistant', 'An error occurred while processing your request.', true);
+            } 
+
+            document.getElementById('btnSend').disabled = false;
+            
+        }
+
+
+    </script>
+}
