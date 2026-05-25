@@ -32,6 +32,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 
 builder.Services.AddControllersWithViews();
 
+
 //Session
 builder.Services.AddSession(options =>
 {
@@ -69,6 +70,9 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
+
+//Add ChatService for ChatBot
+builder.Services.AddScoped<LiteratureClub.Services.ChatService>();
 
 var app = builder.Build();
 
