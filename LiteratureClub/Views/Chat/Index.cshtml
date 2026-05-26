@@ -1,4 +1,4 @@
-﻿@* STEP 4: Chat UI - User types here, JavaScript sends to controller, displays AI reply *@
+﻿@* STEP 4: Chat UI - Enhanced with South African Language Translation Toggle *@
 @{
     ViewData["Title"] = "Chat";
 }
@@ -9,11 +9,10 @@
     <div class="chat-messages" id="chatMessages">
         <div class="chat-welcome" id="chatWelcome">
             <h2>How can I help you today?</h2>
-            <p>Type your question below and press Enter.</p>
+            <p>Type your question below.</p>
         </div>
     </div>
 
-    @* Placed inside the container box so it doesn't break layout spacing *@
     @if (!User.Identity.IsAuthenticated)
     {
         <div class="alert alert-info text-center m-2 shadow-sm border-0">
@@ -22,19 +21,29 @@
         </div>
     }
 
-    <div class="chat-input-area">
-        <input type="text" id="chatInput" placeholder="Type your message..." maxlength="4000" />
-        <button type="button" id="btnSend">Send</button>
+    <div class="chat-input-area d-flex align-items-center p-2 bg-light border-top">
+        <input type="text" id="chatInput" placeholder="Type your message or text to translate..." maxlength="4000" class="form-control me-2" />
+        <button type="button" id="btnSend" class="btn btn-warning fw-bold">Send</button>
     </div>
 </div>
 
 @section Scripts
 {
     <script>
-        // Simple flow: User types - Send to /Chat/SendMessage → Display reply
         document.getElementById('btnSend').onclick = sendMessage;
         document.getElementById('chatInput').onkeydown = function(e) {
             if (e.key === 'Enter') { e.preventDefault(); sendMessage(); }
+        };
+
+        // Listen for toggle changes to update the placeholder text nicely
+        document.getElementById('languageToggle').onchange = function() {
+            var mode = this.value;
+            var input = document.getElementById('chatInput');
+            if (mode === 'chat') {
+                input.placeholder = "Type your message...";
+            } else {
+                input.placeholder = "Type text to translate into " + mode + "...";
+            }
         };
 
         function addMessage(role, text, isError) {
@@ -49,10 +58,11 @@
         async function sendMessage() {
             var input = document.getElementById('chatInput');
             var text = input.value.trim();
+            var mode = document.getElementById('languageToggle').value;
 
             if (!text) return;
 
-            // 1. Build history BEFORE adding the brand new user message to the DOM layout tree
+            // Build history BEFORE adding the new message
             var history = [];
             var msgs = document.querySelectorAll('.chat-message');
             for (var i = 0; i < msgs.length; i++) {
@@ -62,11 +72,17 @@
                 history.push({ role: assignedRole, content: txt });
             }
 
-            // 2. add the fresh user prompt string to the screen layout
+            // Clear input and display what user wrote
             input.value = '';
             addMessage('user', text);
 
             document.getElementById('btnSend').disabled = true;
+
+            // If a language translation is active, tweak the prompt dynamically before sending it to C#
+            var finalPayloadMessage = text;
+            if (mode !== 'chat') {
+                finalPayloadMessage = "[TRANSLATE_MODE=" + mode + "] " + text;
+            }
 
             try {
                 var token = document.querySelector('input[name="__RequestVerificationToken"]').value;
@@ -76,7 +92,7 @@
                         'Content-Type': 'application/json',
                         'RequestVerificationToken': token
                     },
-                    body: JSON.stringify({ message: text, history: history })
+                    body: JSON.stringify({ message: finalPayloadMessage, history: history })
                 });
 
                 var data = await res.json();
