@@ -1,4 +1,9 @@
-﻿<!DOCTYPE html>
+﻿@{
+    // Retrieve the active language preference or default back to English
+    var currentLanguage = Context.Request.Cookies["SelectedLanguage"] ?? "English";
+}
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -10,18 +15,42 @@
           href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
 
     <style>
-            body {
-                background-color: #f8f9fa;
-            }
+        body {
+            background-color: #f8f9fa;
+        }
 
-            .navbar-brand {
-                font-weight: 700;
-                letter-spacing: -0.5px;
-            }
+        .navbar-brand {
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
 
-            footer {
-                font-size: 0.875rem;
-            }
+        footer {
+            font-size: 0.875rem;
+        }
+
+        /* Styling for the Floating Action Button Language Selector */
+        .language-fab {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1050;
+        }
+
+        .language-fab .btn-fab {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: transform 0.2s ease, background-color 0.2s ease;
+        }
+
+        .language-fab .btn-fab:hover {
+            transform: scale(1.05);
+        }
     </style>
     <link rel="stylesheet" href="~/css/chatBot.css" asp-append-version="true" />
    
@@ -135,6 +164,21 @@
         </div>
     </nav>
 
+    <!-- Floating Action Button (FAB) Language Selector Widget -->
+    <div class="dropdown language-fab">
+        <button class="btn btn-warning btn-fab text-dark" type="button" id="fabLangToggle" data-bs-toggle="dropdown" aria-expanded="false" title="Change Language">
+            🌐
+        </button>
+        <ul class="dropdown-menu shadow border-0 mb-2 dropdown-menu-start" aria-labelledby="fabLangToggle">
+            <li><h6 class="dropdown-header">Translate Platform</h6></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item @(currentLanguage == "English" ? "active fw-bold" : "")" href="#" onclick="changePlatformLanguage('English')">English</a></li>
+            <li><a class="dropdown-item @(currentLanguage == "isiZulu" ? "active fw-bold" : "")" href="#" onclick="changePlatformLanguage('isiZulu')">isiZulu</a></li>
+            <li><a class="dropdown-item @(currentLanguage == "isiXhosa" ? "active fw-bold" : "")" href="#" onclick="changePlatformLanguage('isiXhosa')">isiXhosa</a></li>
+            <li><a class="dropdown-item @(currentLanguage == "Sotho" ? "active fw-bold" : "")" href="#" onclick="changePlatformLanguage('Sotho')">Sesotho</a></li>
+        </ul>
+    </div>
+
     <main class="container my-4">
         @RenderBody()
     </main>
@@ -148,6 +192,53 @@
 
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // 1. Changes the global language state cookie and triggers localization
+        async function changePlatformLanguage(langName) {
+        let formData = new FormData();
+        formData.append("culture", langName);
+
+        let response = await fetch('/Language/SetLanguage', {
+        method: 'POST',
+        body: formData
+        });
+
+        if (response.ok) {
+        // Reload the layout view to apply the saved language selection state
+        window.location.reload();
+        }
+        }
+
+        // 2. Automatically processes marked elements when a non-English language is chosen
+        document.addEventListener("DOMContentLoaded", async function () {
+        const currentLang = "@currentLanguage";
+        if (currentLang === "English") return; // Keep standard HTML text default
+
+        // Target elements that have the localizable class 'translate-me'
+        const elementsToTranslate = document.querySelectorAll(".translate-me");
+
+        for (let el of elementsToTranslate) {
+        let originalText = el.innerText.trim();
+        if (!originalText) continue;
+
+        try {
+        let res = await fetch('/Language/TranslateContent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: originalText })
+        });
+
+        let data = await res.json();
+        if (data.success && data.result) {
+        el.innerText = data.result;
+        }
+        } catch (err) {
+        console.error("Localization engine pipeline skip:", err);
+        }
+        }
+        });
+    </script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>
