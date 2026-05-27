@@ -32,6 +32,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 
 builder.Services.AddControllersWithViews();
 
+
 //Session
 builder.Services.AddSession(options =>
 {
@@ -45,6 +46,7 @@ builder.Services.AddSession(options =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<PayFastService>();
 builder.Services.AddScoped<EmailService>();
+builder.Services.AddScoped<ChatService>();
 
 
 // Authentication cookies
@@ -66,6 +68,9 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("StudentOnly", policy => policy.RequireRole("Student"));
     options.AddPolicy("AdminOrStudent", policy => policy.RequireRole("Admin", "Student"));
 });
+
+//Add ChatService for ChatBot
+builder.Services.AddScoped<LiteratureClub.Services.ChatService>();
 
 var app = builder.Build();
 
