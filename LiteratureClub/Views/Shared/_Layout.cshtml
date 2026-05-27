@@ -46,9 +46,7 @@
                     <li class="nav-item">
                         <a class="nav-link" asp-controller="Listings" asp-action="Index">Browse Books</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" asp-controller="Chat" asp-action="Index">ChatBot</a>
-                    </li>
+                    
                     @if (User.Identity?.IsAuthenticated == true)
                     {
                         @if (User.IsInRole("Admin"))
@@ -77,19 +75,15 @@
                                 <a class="nav-link" asp-controller="WantedAds" asp-action="Create">Request a Book</a>
                             </li>
                         }
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Listings" asp-action="Create">Sell a Book</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Dashboard" asp-action="Index">My Dashboard</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="WantedAds" asp-action="Create">Request a Book</a>
-                        </li>
+      
                          <li class="nav-item">
                             <a class="nav-link" asp-controller="WantedAds" asp-action="Index">Wanted Ads</a>
                         </li>
+                       
                     }
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Chat" asp-action="Index">ChatBot</a>
+                    </li>
                 </ul>
 
                 <ul class="navbar-nav ms-auto">
