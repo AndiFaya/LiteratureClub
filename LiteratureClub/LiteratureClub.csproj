@@ -10,13 +10,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Views\NewFolder\**" />
-    <Content Remove="Views\NewFolder\**" />
-    <EmbeddedResource Remove="Views\NewFolder\**" />
-    <None Remove="Views\NewFolder\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <!-- EF Core with SQL Server -->
     <PackageReference Include="Azure.AI.OpenAI" Version="2.3.0-beta.2" />
     <PackageReference Include="Google.GenAI" Version="1.7.0" />
@@ -38,6 +31,10 @@
 
     <!-- Image handling for listing uploads -->
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Service\" />
   </ItemGroup>
 
 </Project>

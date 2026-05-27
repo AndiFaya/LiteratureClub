@@ -54,22 +54,19 @@ builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Account/Login";
     options.LogoutPath = "/Account/Logout";
-    options.AccessDeniedPath = "/Shared/AccessDenied";
+    options.AccessDeniedPath = "/Account/AccessDenied"; // was /Shared/AccessDenied
     options.ExpireTimeSpan = TimeSpan.FromDays(7);
     options.SlidingExpiration = true;
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
 
-builder.Services.ConfigureApplicationCookie(options =>
+//Named authorization policy for admin-only access
+builder.Services.AddAuthorization(options =>
 {
-    options.LoginPath = "/Account/Login";
-    options.LogoutPath = "/Account/Logout";
-    options.AccessDeniedPath = "/Account/AccessDenied"; // was /Shared/AccessDenied
-    options.ExpireTimeSpan = TimeSpan.FromDays(7);
-    options.SlidingExpiration = true;
-    options.Cookie.HttpOnly = true;
-    options.Cookie.IsEssential = true;
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("StudentOnly", policy => policy.RequireRole("Student"));
+    options.AddPolicy("AdminOrStudent", policy => policy.RequireRole("Admin", "Student"));
 });
 
 //Add ChatService for ChatBot
@@ -110,6 +107,9 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseSession();
 app.UseAuthentication();
+app.UseAuthentication();
+
+app.UseAuthorization();
 app.UseAuthorization();
 
 app.MapControllerRoute(
