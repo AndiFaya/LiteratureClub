@@ -44,12 +44,11 @@ namespace LiteratureClub.Controllers
             });
         }
 
-        //POST /Account/Register
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel vm)
         {
-            // Extra format validation
+            // Regex validations
             if (!string.IsNullOrWhiteSpace(vm.DisplayUsername) &&
                 !Regex.IsMatch(vm.DisplayUsername, @"^[a-zA-Z0-9_]{3,30}$"))
                 ModelState.AddModelError(nameof(vm.DisplayUsername),
@@ -68,27 +67,23 @@ namespace LiteratureClub.Controllers
 
             try
             {
-                // Uniqueness checks
-                if (await _userManager.FindByEmailAsync(vm.Email.Trim()) != null)
-                    ModelState.AddModelError(nameof(vm.Email),
-                        "An account with this email already exists.");
+                var trimmedEmail = vm.Email.Trim();
+                var trimmedUsername = vm.DisplayUsername.Trim();
+                var trimmedStudentNumber = vm.StudentNumber.Trim();
 
-                if (await _userManager.Users
-                        .AnyAsync(u => u.StudentNumber == vm.StudentNumber.Trim()))
-                    ModelState.AddModelError(nameof(vm.StudentNumber),
-                        "This student number is already registered.");
+                // Uniqueness checks (Using database collation safety)
+                if (await _userManager.FindByEmailAsync(trimmedEmail) != null)
+                    ModelState.AddModelError(nameof(vm.Email), "An account with this email already exists.");
 
-                if (await _userManager.Users
-                        .AnyAsync(u => u.DisplayUsername.ToLower() ==
-                                       vm.DisplayUsername.ToLower().Trim()))
-                    ModelState.AddModelError(nameof(vm.DisplayUsername),
-                        "This username is already taken.");
+                if (await _userManager.Users.AnyAsync(u => u.StudentNumber == trimmedStudentNumber))
+                    ModelState.AddModelError(nameof(vm.StudentNumber), "This student number is already registered.");
 
-                var campus = await _context.Campuses
-                    .FirstOrDefaultAsync(c => c.Id == vm.CampusId && c.IsActive);
+                if (await _userManager.Users.AnyAsync(u => u.DisplayUsername == trimmedUsername))
+                    ModelState.AddModelError(nameof(vm.DisplayUsername), "This username is already taken.");
+
+                var campus = await _context.Campuses.FirstOrDefaultAsync(c => c.Id == vm.CampusId && c.IsActive);
                 if (campus == null)
-                    ModelState.AddModelError(nameof(vm.CampusId),
-                        "Please select a valid campus.");
+                    ModelState.AddModelError(nameof(vm.CampusId), "Please select a valid campus.");
 
                 if (!ModelState.IsValid)
                 {
@@ -96,15 +91,14 @@ namespace LiteratureClub.Controllers
                     return View(vm);
                 }
 
-                // Create user email not confirmed yet
                 var user = new ApplicationUser
                 {
                     FirstName = vm.FirstName.Trim(),
                     LastName = vm.LastName.Trim(),
-                    DisplayUsername = vm.DisplayUsername.Trim(),
-                    StudentNumber = vm.StudentNumber.Trim(),
-                    Email = vm.Email.ToLower().Trim(),
-                    UserName = vm.Email.ToLower().Trim(),
+                    DisplayUsername = trimmedUsername,
+                    StudentNumber = trimmedStudentNumber,
+                    Email = trimmedEmail.ToLower(),
+                    UserName = trimmedEmail.ToLower(),
                     City = vm.City.Trim(),
                     CampusId = vm.CampusId,
                     IsActive = true,
@@ -112,67 +106,47 @@ namespace LiteratureClub.Controllers
                 };
 
                 var result = await _userManager.CreateAsync(user, vm.Password);
-                _logger.LogInformation(
-                    "CreateAsync for {Email}: {Ok}. Errors: {Errs}",
-                    user.Email, result.Succeeded,
-                    string.Join("; ", result.Errors.Select(e => e.Description)));
 
                 if (!result.Succeeded)
                 {
                     foreach (var e in result.Errors)
                         ModelState.AddModelError(string.Empty, e.Description);
+
                     vm.Campuses = await GetCampusOptionsAsync();
                     return View(vm);
                 }
 
                 await _userManager.AddToRoleAsync(user, "Student");
 
-                // Generate token and build the verification link
                 var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                var confirmLink = Url.Action(
-                    "ConfirmEmail", "Account",
-                    new { userId = user.Id, token },
-                    Request.Scheme)!;
+                var confirmLink = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, token }, Request.Scheme)!;
 
-                _logger.LogInformation(
-                    "Verification link for {Email}: {Link}", user.Email, confirmLink);
+                _logger.LogInformation("Verification link generated for {Email}", user.Email);
 
-                // Send via SendGrid
                 var sent = await _email.SendEmailVerificationAsync(user, confirmLink);
-
                 if (sent)
                 {
-                    // Normal path: redirect to "check your inbox" page
-                    return RedirectToAction("VerificationSent",
-                        new { email = user.Email });
+                    return RedirectToAction("VerificationSent", new { email = user.Email });
                 }
 
-                // Fallback: SendGrid is not configured yet, auto-confirm so the user isn't locked out during development/testing
-                _logger.LogWarning(
-                    "SendGrid not configured or send failed. " +
-                    "Auto-confirming {Email} so they can sign in.", user.Email);
-
+                // Dev Fallback
+                _logger.LogWarning("Email delivery failed. Auto-confirming user for fallback loop.");
                 await _userManager.ConfirmEmailAsync(user, token);
                 await _signInManager.SignInAsync(user, isPersistent: false);
-                TempData["Success"] =
-                    $"Welcome, {user.DisplayUsername}! " +
-                    "Your account is active. " +
-                    "(Verification email could not be sent)";
+
+                TempData["Success"] = $"Welcome, {user.DisplayUsername}! Your account is active. (Verification email skipped)";
                 return RedirectToAction("Index", "Home");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Registration failed for {Email}", vm.Email);
-                ModelState.AddModelError(string.Empty,
-                    "A system error occurred. Please try again.");
+                _logger.LogError(ex, "Registration runtime crash for {Email}", vm.Email);
+                ModelState.AddModelError(string.Empty, "A system error occurred. Please try again.");
             }
 
             vm.Campuses = await GetCampusOptionsAsync();
             return View(vm);
         }
 
-        
-        //GET /Account/VerificationSent
         [HttpGet]
         public IActionResult VerificationSent(string email)
         {
@@ -180,8 +154,6 @@ namespace LiteratureClub.Controllers
             return View();
         }
 
-        
-        //GET /Account/ConfirmEmail
         [HttpGet]
         public async Task<IActionResult> ConfirmEmail(string userId, string token)
         {
@@ -198,54 +170,37 @@ namespace LiteratureClub.Controllers
             }
 
             var result = await _userManager.ConfirmEmailAsync(user, token);
-
             if (result.Succeeded)
             {
-                // Sign in immediately after verifying
                 await _signInManager.SignInAsync(user, isPersistent: false);
-                TempData["Success"] =
-                    $"Welcome to LiteratureClub, {user.DisplayUsername}! " +
-                    "Your email is verified and you're now signed in.";
+                TempData["Success"] = $"Welcome to LiteratureClub, {user.DisplayUsername}! Your email is verified.";
                 return RedirectToAction("Index", "Home");
             }
 
-            ViewBag.Error =
-                "This verification link is invalid or has expired. " +
-                "Please request a new one below.";
+            ViewBag.Error = "This verification link is invalid or has expired.";
             return View("ConfirmEmailResult");
         }
-
 
         [HttpGet]
         public IActionResult ResendVerification() => View();
 
-        //POST /Account/ResendVerification
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ResendVerification(string email)
         {
-            ViewBag.Sent = true; // always show success to prevent email enumeration
+            ViewBag.Sent = true;
 
             var user = await _userManager.FindByEmailAsync(email?.Trim() ?? "");
             if (user != null && !user.EmailConfirmed)
             {
                 var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                var confirmLink = Url.Action(
-                    "ConfirmEmail", "Account",
-                    new { userId = user.Id, token },
-                    Request.Scheme)!;
-
-                _logger.LogInformation(
-                    "Resend verification for {Email}: {Link}", user.Email, confirmLink);
-
+                var confirmLink = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, token }, Request.Scheme)!;
                 await _email.SendEmailVerificationAsync(user, confirmLink);
             }
 
             return View();
         }
 
-        
-        //GET /Account/Login
         [HttpGet]
         public IActionResult Login(string? returnUrl = null)
         {
@@ -256,8 +211,6 @@ namespace LiteratureClub.Controllers
             return View(new LoginViewModel());
         }
 
-        
-        //POST /Account/Login
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel vm, string? returnUrl = null)
@@ -269,6 +222,7 @@ namespace LiteratureClub.Controllers
 
             try
             {
+                // 1. Find the user by their email field first using UserManager
                 var user = await _userManager.FindByEmailAsync(vm.Email.Trim());
 
                 if (user == null)
@@ -277,38 +231,39 @@ namespace LiteratureClub.Controllers
                     return View(vm);
                 }
 
-                if (!user.IsActive)
-                {
-                    ModelState.AddModelError(string.Empty,
-                        "This account has been suspended. Please contact support.");
-                    return View(vm);
-                }
-
-                if (!user.EmailConfirmed)
-                {
-                    ModelState.AddModelError(string.Empty,
-                        "Please verify your email before signing in. " +
-                        "Check your inbox for the verification link.");
-                    ViewData["UnverifiedEmail"] = user.Email;
-                    return View(vm);
-                }
-
+                // 2. Use the exact username stored in the DB record to sign in safely
                 var result = await _signInManager.PasswordSignInAsync(
-                    user, vm.Password, vm.RememberMe, lockoutOnFailure: true);
+                    user.UserName!,
+                    vm.Password,
+                    vm.RememberMe,
+                    lockoutOnFailure: true
+                );
 
                 if (result.Succeeded)
                 {
-                    _logger.LogInformation("User {Email} signed in.", vm.Email);
+                    if (!user.IsActive)
+                    {
+                        await _signInManager.SignOutAsync();
+                        ModelState.AddModelError(string.Empty, "This account has been suspended.");
+                        return View(vm);
+                    }
+
+                    _logger.LogInformation("User logged in successfully.");
                     if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                         return Redirect(returnUrl);
+
                     return RedirectToAction("Index", "Home");
                 }
 
                 if (result.IsLockedOut)
                 {
-                    ModelState.AddModelError(string.Empty,
-                        "Account locked after too many failed attempts. " +
-                        "Try again in 5 minutes.");
+                    ModelState.AddModelError(string.Empty, "Account locked out. Try again in 5 minutes.");
+                    return View(vm);
+                }
+
+                if (result.IsNotAllowed)
+                {
+                    ModelState.AddModelError(string.Empty, "Please verify your email address before logging in.");
                     return View(vm);
                 }
 
@@ -316,15 +271,13 @@ namespace LiteratureClub.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Login error for {Email}", vm.Email);
-                ModelState.AddModelError(string.Empty,
-                    "A system error occurred. Please try again.");
+                _logger.LogError(ex, "Authentication failure trace for {Email}", vm.Email);
+                ModelState.AddModelError(string.Empty, "A system error occurred.");
             }
 
             return View(vm);
         }
 
-        //POST /Account/Logout
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
@@ -334,16 +287,9 @@ namespace LiteratureClub.Controllers
             return RedirectToAction("Index", "Home");
         }
 
-
-        //GET /Account/AccessDenied
         [HttpGet]
-        public IActionResult AccessDenied()
-        {
-            return View();
-        }
+        public IActionResult AccessDenied() => View();
 
-
-        //Helpers
         private async Task<List<CampusOption>> GetCampusOptionsAsync()
         {
             try
@@ -361,8 +307,8 @@ namespace LiteratureClub.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to load campuses.");
-                return new();
+                _logger.LogError(ex, "Failed to load active campuses subset.");
+                return new List<CampusOption>();
             }
         }
     }

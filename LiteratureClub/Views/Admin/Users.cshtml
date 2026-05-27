@@ -1,0 +1,106 @@
+﻿@model IEnumerable<LiteratureClub.Models.ApplicationUser>
+@{
+    ViewData["Title"] = "Manage Users";
+    var userRoles = ViewBag.UserRoles as Dictionary<string, IList<string>>;
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>🛡️ Administrative Control Panel: Users</h2>
+        <a asp-controller="Admin" asp-action="Index" class="btn btn-outline-secondary btn-sm">Back to Dashboard</a>
+    </div>
+
+    <!-- Search Bar Form -->
+    <form asp-action="Users" method="get" class="row g-2 mb-4">
+        <div class="col-md-9">
+            <input type="text" name="searchTerm" class="form-control" placeholder="Search by email or username..." value="@Context.Request.Query["searchTerm"]" />
+        </div>
+        <div class="col-md-3 d-grid">
+            <button type="submit" class="btn btn-dark">Search</button>
+        </div>
+    </form>
+
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Current Role</th>
+                        <th>Account Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model)
+                    {
+                        var isUserAdmin = userRoles != null && userRoles.ContainsKey(user.Id) && userRoles[user.Id].Contains("Admin");
+
+                        <tr>
+                            <td><strong>@user.DisplayUsername</strong></td>
+                            <td>@user.Email</td>
+                            <td>
+                                @if (isUserAdmin)
+                                {
+                                    <span class="badge bg-danger px-2.5 py-1.5 shadow-sm">Admin</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-info text-dark px-2.5 py-1.5">Student</span>
+                                }
+                            </td>
+                            <td>
+                                @if (user.IsActive)
+                                {
+                                    <span class="badge bg-success rounded-circle d-inline-block p-1 me-1" style="width: 8px; height: 8px;"></span>
+                                    <span class="text-success fw-semibold small">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary rounded-circle d-inline-block p-1 me-1" style="width: 8px; height: 8px;"></span>
+                                    <span class="text-muted fw-semibold small">Suspended</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <div class="d-inline-flex gap-2">
+                                    <!-- Toggle Active/Suspended status -->
+                                    <form asp-action="ToggleUserStatus" method="post" class="m-0">
+                                        <input type="hidden" name="userId" value="@user.Id" />
+                                        @if (user.IsActive)
+                                        {
+                                            <button type="submit" class="btn btn-outline-warning btn-sm">Suspend</button>
+                                        }
+                                        else
+                                        {
+                                            <button type="submit" class="btn btn-success btn-sm">Activate</button>
+                                        }
+                                    </form>
+
+                                    <!-- Role Management Buttons (Don't let an admin demote themselves accidentally) -->
+                                    @if (user.UserName != User.Identity?.Name)
+                                    {
+                                        if (isUserAdmin)
+                                        {
+                                            <form asp-action="DemoteToStudent" method="post" class="m-0">
+                                                <input type="hidden" name="userId" value="@user.Id" />
+                                                <button type="submit" class="btn btn-outline-secondary btn-sm">Demote to Student</button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <form asp-action="PromoteToAdmin" method="post" class="m-0">
+                                                <input type="hidden" name="userId" value="@user.Id" />
+                                                <button type="submit" class="btn btn-primary btn-sm">Make Admin</button>
+                                            </form>
+                                        }
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
