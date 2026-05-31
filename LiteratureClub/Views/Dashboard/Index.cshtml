@@ -91,6 +91,8 @@
     </div>
 </div>
 
+
+
 <!--Tabbed sections-->
 <ul class="nav nav-tabs mb-3" id="dashboardTabs">
     <li class="nav-item">
@@ -189,10 +191,20 @@
                                 </td>
                                 <td class="text-muted small">@l.CreatedAt.ToString("dd MMM yyyy")</td>
                                 <td>
-                                    <a asp-controller="Listings" asp-action="Edit"
-                                       asp-route-id="@l.Id" class="btn btn-outline-secondary btn-sm">
-                                        Edit
-                                    </a>
+                                    @if (l.Status == LiteratureClub.Models.ListingStatus.Available)
+                                    {
+                                        <a asp-controller="Listings" asp-action="Edit"
+                                           asp-route-id="@l.Id"
+                                           class="btn btn-outline-secondary btn-sm">
+                                            Edit
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">
+                                            @l.Status
+                                        </span>
+                                    }
                                 </td>
                             </tr>
                         }
@@ -292,13 +304,43 @@
                                 </td>
                                 <td class="text-muted small">@t.CreatedAt.ToString("dd MMM yyyy")</td>
                                 <td>
-                                    @if (t.HasReceipt)
-                                    {
-                                        <a asp-controller="Transactions" asp-action="Receipt"
-                                           asp-route-id="@t.Id" class="btn btn-outline-secondary btn-sm">
-                                            Receipt
+                                    <div class="d-flex gap-1 flex-wrap">
+                                        @if (t.Status == LiteratureClub.Models.TransactionStatus.PaymentPending)
+                                        {
+                                            <a asp-controller="Transactions" asp-action="Pay"
+                                               asp-route-id="@t.Id"
+                                               class="btn btn-success btn-sm fw-semibold">
+                                                💳 Pay Now
+                                            </a>
+                                        }
+                                        <a asp-controller="Transactions" asp-action="Detail"
+                                           asp-route-id="@t.Id"
+                                           class="btn btn-primary btn-sm">
+                                            View Transaction
                                         </a>
-                                    }
+                                        @if (t.HasReceipt)
+                                        {
+                                            <a asp-controller="Transactions" asp-action="Receipt"
+                                               asp-route-id="@t.Id"
+                                               class="btn btn-outline-secondary btn-sm">
+                                                Receipt
+                                            </a>
+                                        }
+                                        @if (t.CanReview)
+                                        {
+                                            <a asp-controller="Reviews" asp-action="Leave"
+                                               asp-route-transactionId="@t.Id"
+                                               class="btn btn-warning btn-sm fw-semibold">
+                                                ★ Review Seller
+                                            </a>
+                                        }
+                                        else if (t.HasReview)
+                                        {
+                                            <span class="btn btn-sm btn-outline-success disabled">
+                                                ✓ Reviewed
+                                            </span>
+                                        }
+                                    </div>
                                 </td>
                             </tr>
                         }
