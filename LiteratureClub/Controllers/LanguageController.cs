@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System;
+﻿using System;
+using System.Collections.Generic;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using LiteratureClub.Services;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 
 namespace LiteratureClub.Controllers
 {
@@ -15,8 +17,8 @@ namespace LiteratureClub.Controllers
             _translationService = translationService;
         }
 
-        // Sets the language preference cookie globally across the browser session
         [HttpPost]
+        [IgnoreAntiforgeryToken]
         public IActionResult SetLanguage(string culture)
         {
             if (!string.IsNullOrEmpty(culture))
@@ -24,8 +26,9 @@ namespace LiteratureClub.Controllers
                 CookieOptions option = new CookieOptions
                 {
                     Expires = DateTime.Now.AddDays(30),
-                    HttpOnly = true,
-                    Secure = true
+                    HttpOnly = false,
+                    Secure = HttpContext.Request.IsHttps,
+                    SameSite = SameSiteMode.Lax
                 };
                 Response.Cookies.Append("SelectedLanguage", culture, option);
             }
@@ -33,24 +36,27 @@ namespace LiteratureClub.Controllers
             return Json(new { success = true });
         }
 
-        // Endpoint for translating dynamic page content via JavaScript
         [HttpPost]
-        public async Task<IActionResult> TranslateContent([FromBody] TranslationData data)
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> TranslateContent([FromBody] TranslationRequestPayload payload)
         {
-            if (data == null || string.IsNullOrWhiteSpace(data.Text))
-            {
-                return Json(new { success = false, result = "" });
-            }
+            if (payload == null || payload.Texts == null || payload.Texts.Count == 0)
+                return Json(new { success = false, results = new List<string>() });
 
-            string currentLang = Request.Cookies["SelectedLanguage"] ?? "English";
-            string translatedResult = await _translationService.TranslateUiTextAsync(data.Text, currentLang);
+            // Use the language sent by the client, not a server-side cookie
+            string targetLang = string.IsNullOrWhiteSpace(payload.TargetLanguage) ? "English" : payload.TargetLanguage;
 
-            return Json(new { success = true, result = translatedResult });
+            List<string> translatedResults = await _translationService.TranslateMultipleTextsAsync(payload.Texts, targetLang);
+
+            return Json(new { success = true, results = translatedResults });
         }
     }
-
-    public class TranslationData
+    public class TranslationRequestPayload
     {
-        public string Text { get; set; } = string.Empty;
+        [JsonPropertyName("texts")]
+        public List<string> Texts { get; set; } = new List<string>();
+
+        [JsonPropertyName("targetLanguage")]   // <-- new field
+        public string TargetLanguage { get; set; } = "English";
     }
 }

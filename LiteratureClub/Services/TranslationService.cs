@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Google.GenAI;
 using Google.GenAI.Types;
@@ -16,37 +17,62 @@ namespace LiteratureClub.Services
             _apiKey = configuration["Gemini:ApiKey"] ?? string.Empty;
         }
 
-        public async Task<string> TranslateUiTextAsync(string originalText, string targetLanguage)
+        // TranslationService.cs
+        private static readonly Dictionary<string, string> CultureToLanguage = new()
         {
-            if (string.IsNullOrEmpty(_apiKey) || string.IsNullOrWhiteSpace(originalText))
-                return originalText;
+            { "en", "English" },    { "en-US", "English" }, { "en-ZA", "English" },
+            { "zu", "Zulu" },       { "zu-ZA", "Zulu" },    { "isiZulu", "Zulu" },
+            { "xh", "Xhosa" },      { "xh-ZA", "Xhosa" },   { "isiXhosa", "Xhosa" },
+            { "st", "Sotho" },      { "st-ZA", "Sotho" },
+        };
 
-            // If the user selects English, return the original text directly without calling the API
+        public async Task<List<string>> TranslateMultipleTextsAsync(List<string> originalTexts, string targetLanguage)
+        {
+            // Resolve culture code to full name if needed
+            if (CultureToLanguage.TryGetValue(targetLanguage, out var resolvedName))
+                targetLanguage = resolvedName;
+
+            if (string.IsNullOrEmpty(_apiKey) || originalTexts == null || originalTexts.Count == 0)
+                return originalTexts ?? new List<string>();
+
             if (targetLanguage.Equals("English", StringComparison.OrdinalIgnoreCase))
-                return originalText;
+                return originalTexts;
 
             try
             {
                 var client = new Client(apiKey: _apiKey);
 
-                var systemInstruction = new Content();
-                systemInstruction.Parts.Add(new Part
+                var systemContent = new Content
                 {
-                    Text = $"You are a localization software engine for a South African student textbook marketplace. " +
-                           $"Translate the provided text precisely into {targetLanguage}. Maintain standard conversational terminology " +
-                           $"used by university students (e.g., matching common expressions for modules, buy, or sell). " +
-                           $"Output ONLY the translated text. Do not add explanations, notes, or wrapper quotes."
-                });
+                    Parts = new List<Part>
+                    {
+                        new Part
+                        {
+                            Text = $"You are a localization software engine for a South African student textbook marketplace. " +
+                                   $"Translate the provided list of text items precisely into {targetLanguage}. Maintain standard conversational terminology " +
+                                   $"used by university students (e.g., matching common expressions for modules, buy, or sell). " +
+                                   $"Output the translations as a raw list separated strictly by newlines matching the exact order of the input rows. " +
+                                   $"Do not add line numbers, explanations, notes, or wrapper quotes."
+                        }
+                    }
+                };
 
                 var config = new GenerateContentConfig
                 {
-                    SystemInstruction = systemInstruction,
-                    Temperature = 0.1f // Near-deterministic for reliable UI consistency
+                    SystemInstruction = systemContent,
+                    Temperature = 0.1f // Kept low for reliable structural translation consistency
                 };
+
+                // Bundle all sentences together separated by unique newline breaks
+                string bundledInput = string.Join("\n", originalTexts);
 
                 var contents = new List<Content>
                 {
-                    new Content { Role = "user", Parts = { new Part { Text = originalText } } }
+                    new Content
+                    {
+                        Role = "user",
+                        Parts = new List<Part> { new Part { Text = bundledInput } }
+                    }
                 };
 
                 var response = await client.Models.GenerateContentAsync(
@@ -55,21 +81,36 @@ namespace LiteratureClub.Services
                     config: config
                 );
 
-                if (response?.Candidates != null && response.Candidates.Count > 0)
+                if (response != null && !string.IsNullOrWhiteSpace(response.Text))
                 {
-                    var translatedText = response.Candidates[0].Content?.Parts?[0]?.Text;
-                    if (!string.IsNullOrWhiteSpace(translatedText))
+                    // Split the single returned translation block back into separate lines
+                    var translatedLines = response.Text.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                                   .Select(line => line.Trim())
+                                   .ToList();
+
+                    var results = new List<string>();
+                    for (int i = 0; i < originalTexts.Count; i++)
                     {
-                        return translatedText.Trim();
+                        // Match lines back to their corresponding indexes, fall back to English if counts mismatch
+                        if (i < translatedLines.Count && !string.IsNullOrWhiteSpace(translatedLines[i]))
+                        {
+                            results.Add(translatedLines[i]);
+                        }
+                        else
+                        {
+                            results.Add(originalTexts[i]);
+                        }
                     }
+                    return results;
                 }
 
-                return originalText;
+                return originalTexts;
             }
-            catch
+            catch (Exception ex)
             {
-                // Fallback gracefully to original English text if the API fails
-                return originalText;
+                // Clear any debug screens to quietly drop back to English if the key remains rate-limited
+                System.Diagnostics.Debug.WriteLine($"Bundled translation failure: {ex.Message}");
+                return originalTexts;
             }
         }
     }
