@@ -15,22 +15,22 @@
 <div class="py-5 text-center mb-4 rounded-3"
      style="background:linear-gradient(135deg,#0d6efd11,#0d6efd22);">
     <h1 class="display-6 fw-bold mb-2">Buy &amp; Sell University Textbooks</h1>
-    <p class="lead text-muted mb-4">
+    <p class="lead text-muted mb-4 translate-me">
         Save money by buying from fellow students.<br />
         Earn money by selling books you no longer need.
     </p>
     <div class="d-flex justify-content-center gap-3 flex-wrap">
         <a asp-controller="Listings" asp-action="Index"
-           class="btn btn-primary btn-lg px-4">Browse Books</a>
+           class="btn btn-primary btn-lg px-4 translate-me">Browse Books</a>
         @if (User.Identity?.IsAuthenticated == true)
         {
             <a asp-controller="Listings" asp-action="Create"
-               class="btn btn-outline-primary btn-lg px-4">Sell a Book</a>
+               class="btn btn-outline-primary btn-lg px-4 translate-me">Sell a Book</a>
         }
         else
         {
             <a asp-controller="Account" asp-action="Register"
-               class="btn btn-outline-primary btn-lg px-4">Get Started — It's Free</a>
+               class="btn btn-outline-primary btn-lg px-4 translate-me">Get Started — It's Free</a>
         }
     </div>
 </div>
@@ -57,8 +57,8 @@
         <div class="card h-100 border-0 bg-light">
             <div class="card-body">
                 <div style="font-size:32px" class="mb-2">🔍</div>
-                <h6 class="fw-bold">Browse Listings</h6>
-                <p class="text-muted small mb-0">
+                <h6 class="fw-bold translate-me">Browse Listings</h6>
+                <p class="text-muted small mb-0 translate-me">
                     Search and find textbooks easily
                 </p>
             </div>
@@ -68,8 +68,8 @@
         <div class="card h-100 border-0 bg-light">
             <div class="card-body">
                 <div style="font-size:32px" class="mb-2">💳</div>
-                <h6 class="fw-bold">Pay Securely</h6>
-                <p class="text-muted small mb-0">
+                <h6 class="fw-bold translate-me">Pay Securely</h6>
+                <p class="text-muted small mb-0 translate-me">
                     Payments go through PayFast so your details are never stored.
                 </p>
             </div>
@@ -79,8 +79,8 @@
         <div class="card h-100 border-0 bg-light">
             <div class="card-body">
                 <div style="font-size:32px" class="mb-2">🤝</div>
-                <h6 class="fw-bold">Exchange on Campus</h6>
-                <p class="text-muted small mb-0">
+                <h6 class="fw-bold translate-me">Exchange on Campus</h6>
+                <p class="text-muted small mb-0 translate-me">
                     Meet at a safe campus pickup point.
                 </p>
             </div>
@@ -92,9 +92,9 @@
 @if (Model.Any())
 {
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="mb-0">Recently Listed</h5>
+        <h5 class="mb-0 translate-me">Recently Listed</h5>
         <a asp-controller="Listings" asp-action="Index"
-           class="btn btn-sm btn-outline-primary">View all →</a>
+           class="btn btn-sm btn-outline-primary translate-me">View all →</a>
     </div>
 
     <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3 mb-5">
@@ -151,12 +151,12 @@ else
         @if (User.Identity?.IsAuthenticated == true)
         {
             <a asp-controller="Listings" asp-action="Create"
-               class="btn btn-primary">Post a Listing</a>
+               class="btn btn-primary translate-me">Post a Listing</a>
         }
         else
         {
             <a asp-controller="Account" asp-action="Register"
-               class="btn btn-primary">Register to Sell</a>
+               class="btn btn-primary translate-me">Register to Sell</a>
         }
     </div>
 }

@@ -1,4 +1,9 @@
-﻿<!DOCTYPE html>
+﻿@{
+    // Retrieve the active language preference or default back to English
+    var currentLanguage = Context.Request.Cookies["SelectedLanguage"] ?? "English";
+}
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -27,6 +32,33 @@
             letter-spacing: -0.5px;
         }
 
+            footer {
+                font-size: 0.875rem;
+            }
+
+            /* Styling for the Floating Action Button Language Selector */
+            .language-fab {
+                position: fixed;
+                bottom: 20px;
+                left: 20px;
+                z-index: 1050;
+            }
+
+                .language-fab .btn-fab {
+                    width: 52px;
+                    height: 52px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 1.3rem;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                    transition: transform 0.2s ease, background-color 0.2s ease;
+                }
+
+                    .language-fab .btn-fab:hover {
+                        transform: scale(1.05);
+                    }
         footer {
             font-size: 0.875rem;
         }
@@ -160,6 +192,21 @@
         </div>
     </nav>
 
+    <!-- Floating Action Button (FAB) Language Selector Widget -->
+    <div class="dropdown language-fab">
+        <button class="btn btn-warning btn-fab text-dark" type="button" id="fabLangToggle" data-bs-toggle="dropdown" aria-expanded="false" title="Change Language">
+            🌐
+        </button>
+        <ul class="dropdown-menu shadow border-0 mb-2 dropdown-menu-start" aria-labelledby="fabLangToggle">
+            <li><h6 class="dropdown-header">Translate Platform</h6></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item @(currentLanguage == "English" ? "active fw-bold" : "")" href="#" onclick="changePlatformLanguage('English')">English</a></li>
+            <li><a class="dropdown-item @(currentLanguage == "isiZulu" ? "active fw-bold" : "")" href="#" onclick="changePlatformLanguage('isiZulu')">isiZulu</a></li>
+            <li><a class="dropdown-item @(currentLanguage == "isiXhosa" ? "active fw-bold" : "")" href="#" onclick="changePlatformLanguage('isiXhosa')">isiXhosa</a></li>
+            <li><a class="dropdown-item @(currentLanguage == "Sotho" ? "active fw-bold" : "")" href="#" onclick="changePlatformLanguage('Sotho')">Sesotho</a></li>
+        </ul>
+    </div>
+
     <main class="container my-4">
         @RenderBody()
     </main>
@@ -173,6 +220,81 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
+        // 1. Changes the global language state cookie and triggers localization
+        async function changePlatformLanguage(langName) {
+        let formData = new FormData();
+        formData.append("culture", langName);
+
+        let response = await fetch('/Language/SetLanguage', {
+        method: 'POST',
+        body: formData
+        });
+
+        if (response.ok) {
+        window.location.reload();
+        }
+        }
+
+        // 2. Bundled Single-Request Translation Engine with Safety Mapping
+        document.addEventListener("DOMContentLoaded", async function () {
+        // Read choice cookie natively from browser context
+        const cookies = document.cookie.split('; ');
+        const langCookie = cookies.find(row => row.startsWith('SelectedLanguage='));
+        const currentLang = langCookie ? decodeURIComponent(langCookie.split('=')[1]) : 'English';
+
+        // Halt instantly if working in default English layout mode
+        if (currentLang === "English") return;
+
+        // Find all elements marked for translation
+        const elementsToTranslate = document.querySelectorAll(".translate-me");
+        if (elementsToTranslate.length === 0) {
+        console.log("No elements with class 'translate-me' were found on this page.");
+        return;
+        }
+
+        // Collect and clean the plain text from elements
+        let textArray = [];
+        let validElements = [];
+
+        elementsToTranslate.forEach(el => {
+        let cleanText = el.innerText ? el.innerText.trim() : "";
+        if (cleanText !== "") {
+        textArray.push(cleanText);
+        validElements.push(el); // Track elements that actually have text
+        }
+        });
+
+        if (textArray.length === 0) return;
+
+        try {
+        console.log(`Sending ${textArray.length} items to backend for translation into ${currentLang}...`);
+
+        let res = await fetch('/Language/TranslateContent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ texts: textArray, targetLanguage: currentLang })  
+        });
+
+        if (res.ok) {
+        let data = await res.json();
+        if (data.success && data.results) {
+        console.log("Translations successfully received from Gemini!", data.results);
+
+        // Map the array results back to the valid UI elements
+        validElements.forEach((el, index) => {
+        if (data.results[index] && data.results[index].trim() !== "") {
+        el.innerText = data.results[index].trim();
+        }
+        });
+        }
+        } else {
+        console.error("Failed to fetch translations. Server status:", res.status);
+        }
+        } catch (err) {
+        console.error("Bundled localization network pipeline failed:", err);
+        }
+        });
+    </script>
         document.addEventListener('DOMContentLoaded', () => {
             const toggleBtn = document.getElementById('themeToggle');
 

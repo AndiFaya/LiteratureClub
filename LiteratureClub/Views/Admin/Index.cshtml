@@ -1,12 +1,13 @@
 ﻿@{
     ViewData["Title"] = "Admin Dashboard";
 }
+@Html.AntiForgeryToken()
 
-<div class="container mt-4">
+<div class="container mt-4 " >
     <div class="p-5 mb-4 bg-dark text-white rounded-3 shadow-sm">
         <div class="container-fluid py-2">
-            <h1 class="display-5 fw-bold">Literature Club Console</h1>
-            <p class="col-md-8 fs-4 text-secondary">System monitoring, user roles management, and content control center.</p>
+            <h1 class="display-5 fw-bold translate-me">Literature Club Console</h1>
+            <p class="col-md-8 fs-4 text-secondary translate-me">System monitoring, user roles management, and content control center.</p>
         </div>
     </div>
 
@@ -14,9 +15,9 @@
         <div class="col-md-4">
             <div class="card border-0 shadow-sm bg-light h-100 p-3">
                 <div class="card-body">
-                    <h6 class="card-subtitle mb-2 text-muted uppercase text-xs">Total Registered Members</h6>
+                    <h6 class="card-subtitle mb-2 text-muted uppercase text-xs translate-me">Total Registered Members</h6>
                     <h2 class="card-title display-6 fw-bold text-dark">@ViewBag.UserCount</h2>
-                    <a asp-action="Users" class="btn btn-dark btn-sm mt-3 rounded-pill">Manage Users &rarr;</a>
+                    <a asp-action="Users" class="btn btn-dark btn-sm mt-3 rounded-pill translate-me">Manage Users &rarr;</a>
                 </div>
             </div>
         </div>
@@ -24,9 +25,9 @@
         <div class="col-md-4">
             <div class="card border-0 shadow-sm bg-light h-100 p-3">
                 <div class="card-body">
-                    <h6 class="card-subtitle mb-2 text-muted uppercase text-xs">Active Book Listings</h6>
+                    <h6 class="card-subtitle mb-2 text-muted uppercase text-xs translate-me">Active Book Listings</h6>
                     <h2 class="card-title display-6 fw-bold text-primary">@ViewBag.ListingCount</h2>
-                    <p class="text-muted small mt-4 mb-0">Browsing features are open to public guests.</p>
+                    <p class="text-muted small mt-4 mb-0 translate-me">Browsing features are open to public guests.</p>
                 </div>
             </div>
         </div>
@@ -34,9 +35,9 @@
         <div class="col-md-4">
             <div class="card border-0 shadow-sm bg-light h-100 p-3">
                 <div class="card-body">
-                    <h6 class="card-subtitle mb-2 text-muted uppercase text-xs">Pending Reports</h6>
+                    <h6 class="card-subtitle mb-2 text-muted uppercase text-xs translate-me">Pending Reports</h6>
                     <h2 class="card-title display-6 fw-bold text-danger">@ViewBag.ReportCount</h2>
-                    <p class="text-muted small mt-4 mb-0">System issues flagged for review.</p>
+                    <p class="text-muted small mt-4 mb-0 translate-me">System issues flagged for review.</p>
                 </div>
             </div>
         </div>
