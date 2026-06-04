@@ -2,10 +2,11 @@
     ViewData["Title"] = "Confirm Payment";
     var paymentData = ViewBag.PaymentData as Dictionary<string, string>;
     var transaction = ViewBag.Transaction as LiteratureClub.Models.Transaction;
+    var signatureInput = ViewBag.SignatureInput as string;
 }
 
 <div class="row justify-content-center mt-4">
-    <div class="col-md-5">
+    <div class="col-md-6">
 
         <div class="card shadow-sm mb-4">
             <div class="card-body">
@@ -27,70 +28,86 @@
                 </div>
                 <hr />
                 <p class="text-muted small mb-0">
-                    Click <strong>Proceed to Payment</strong> below to complete your
-                    purchase securely via PayFast. You will receive a verification
-                    code by email once payment is confirmed.
+                    Click <strong>Proceed to Payment</strong> to pay securely via PayFast.
+                    You will receive a 6-digit verification code by email once confirmed.
                 </p>
             </div>
         </div>
 
-        <div class="card shadow-sm border-0 bg-light mb-4 p-3 d-flex flex-row align-items-center gap-3">
+        <div class="card border-0 bg-light mb-4 p-3 d-flex flex-row align-items-center gap-3">
             <span style="font-size:28px">🔒</span>
             <div>
                 <div class="fw-semibold small">Secure payment via PayFast</div>
                 <div class="text-muted" style="font-size:12px">
-                    Your payment details are handled by PayFast and are never stored by LiteratureClub.
+                    Your card details are handled by PayFast and never stored here.
                 </div>
             </div>
         </div>
 
-        @* Hidden PayFast form — submitted by the button below *@
-        <form id="payfast-form"
-              action="@ViewBag.PayFastUrl"
-              method="POST">
+        @* Hidden form — submitted by the button below *@
+        <form id="payfast-form" action="@ViewBag.PayFastUrl" method="POST">
             @foreach (var field in paymentData ?? new Dictionary<string, string>())
             {
                 <input type="hidden" name="@field.Key" value="@field.Value" />
             }
         </form>
 
-        @* Visible button — submits the hidden form above *@
-        <button type="button"
-                id="pay-btn"
+        <button type="button" id="pay-btn"
                 class="btn btn-success w-100 py-2 fw-semibold"
                 onclick="submitPayment()">
             Proceed to Payment — R @transaction?.Amount.ToString("N2")
         </button>
 
         <div class="text-center mt-3">
-            <a asp-controller="Listings"
-                   asp-action="Detail"
-                   asp-route-id="@transaction?.ListingId"
-                   class="text-muted small">
-                Cancel and go back
-            </a>
+            <a asp-controller="Listings" asp-action="Detail"
+               asp-route-id="@transaction?.ListingId"
+               class="text-muted small">Cancel and go back</a>
         </div>
 
-        @* Debug panel — shows in development so you can verify fields *@
-        @if (System.Diagnostics.Debugger.IsAttached)
-        {
-            <div class="card mt-4 border-warning">
-                <div class="card-header bg-warning text-dark small fw-bold">
-                    Dev — PayFast fields being submitted
-                </div>
-                <div class="card-body p-2">
-                    <table class="table table-sm mb-0" style="font-size:11px">
+        @* Diagnostic panel — remove before going live *@
+        <div class="card mt-4 border-warning">
+            <div class="card-header bg-warning text-dark small fw-bold d-flex justify-content-between">
+                <span>🔧 PayFast Diagnostic</span>
+                <button class="btn btn-sm btn-outline-dark py-0"
+                        onclick="document.getElementById('diag').classList.toggle('d-none')">
+                    Toggle
+                </button>
+            </div>
+            <div id="diag" class="card-body p-2">
+                <p class="text-muted small mb-2">
+                    Paste the <strong>Signature input string</strong> into
+                    <a href="https://www.md5hashgenerator.com" target="_blank">md5hashgenerator.com</a>.
+                    The result must equal the <strong>signature</strong> field value below.
+                    If it doesn't, your passphrase in <code>appsettings.json</code>
+                    doesn't match your PayFast sandbox account setting.
+                </p>
+                <table class="table table-sm mb-2" style="font-size:11px">
+                    <thead class="table-light">
+                        <tr><th>Field</th><th>Value</th></tr>
+                    </thead>
+                    <tbody>
                         @foreach (var field in paymentData ?? new Dictionary<string, string>())
                         {
-                            <tr>
+                            <tr class="@(field.Key == "signature" ? "table-warning" : "")">
                                 <td class="text-muted">@field.Key</td>
-                                <td class="fw-semibold" style="word-break:break-all">@field.Value</td>
+                                <td style="word-break:break-all;font-family:monospace">
+                                    @field.Value
+                                </td>
                             </tr>
                         }
-                    </table>
+                    </tbody>
+                </table>
+                <div class="mb-0">
+                    <div class="text-muted small fw-bold mb-1">
+                        Signature input string (MD5 this to get the signature above):
+                    </div>
+                    <div class="bg-light border rounded p-2"
+                         style="word-break:break-all;font-size:10px;font-family:monospace">
+                        @signatureInput
+                    </div>
                 </div>
             </div>
-        }
+        </div>
 
     </div>
 </div>
@@ -101,11 +118,9 @@
             var btn = document.getElementById('pay-btn');
             btn.disabled = true;
             btn.textContent = 'Redirecting to PayFast…';
-
-            // Small delay so the UI update is visible, then submit
             setTimeout(function () {
                 document.getElementById('payfast-form').submit();
-            }, 300);
+            }, 400);
         }
     </script>
 }

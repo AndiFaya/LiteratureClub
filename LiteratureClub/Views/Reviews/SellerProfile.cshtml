@@ -1,0 +1,194 @@
+﻿@{
+    ViewData["Title"] = "Seller Profile";
+    var seller = ViewBag.Seller as LiteratureClub.Models.ApplicationUser;
+    var reviews = ViewBag.Reviews as List<LiteratureClub.Models.SellerReview>;
+    var avgRating = (double)ViewBag.AverageRating;
+    var activeListings = (int)ViewBag.ActiveListings;
+    var totalSales = (int)ViewBag.TotalSales;
+    var breakdown = ViewBag.RatingBreakdown as dynamic;
+}
+
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a asp-controller="Listings" asp-action="Index">Browse Books</a>
+        </li>
+        <li class="breadcrumb-item active">@seller?.DisplayUsername</li>
+    </ol>
+</nav>
+
+<div class="row g-4">
+
+    <!--Left: seller card-->
+    <div class="col-md-4">
+
+        <div class="card shadow-sm mb-3">
+            <div class="card-body text-center py-4">
+
+                <!-- Avatar -->
+                <div class="rounded-circle bg-primary d-flex align-items-center
+                    justify-content-center text-white fw-bold mx-auto mb-3"
+                     style="width:72px;height:72px;font-size:28px">
+                    @seller?.DisplayUsername.Substring(0, 1).ToUpper()
+                </div>
+
+                <h4 class="mb-1">@seller?.DisplayUsername</h4>
+                <p class="text-muted small mb-3">
+                    @seller?.Campus?.University — @seller?.Campus?.Name
+                </p>
+
+                <!-- Average star display -->
+                @if (reviews!.Any())
+                {
+                    <div class="mb-1">
+                        @for (int i = 1; i <= 5; i++)
+                        {
+                            <span style="font-size:24px;
+                                color:@(i <= Math.Round(avgRating) ? "#f59e0b" : "#dee2e6")">
+                                ★
+                            </span>
+                        }
+                    </div>
+                    <div class="fw-bold fs-4 mb-0">
+                        @avgRating.ToString("N1")
+                        <span class="text-muted fw-normal fs-6">/ 5</span>
+                    </div>
+                    <div class="text-muted small mb-3">
+                        @reviews.Count review@(reviews.Count == 1 ? "" : "s")
+                    </div>
+                }
+                else
+                {
+                    <div class="text-muted small mb-3">No reviews yet</div>
+                }
+
+                <hr />
+
+                <div class="row text-center g-0">
+                    <div class="col-6 border-end">
+                        <div class="fw-bold fs-5">@activeListings</div>
+                        <div class="text-muted" style="font-size:11px">Active listings</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="fw-bold fs-5">@totalSales</div>
+                        <div class="text-muted" style="font-size:11px">Completed sales</div>
+                    </div>
+                </div>
+
+                <hr />
+
+                <a asp-controller="Listings" asp-action="Index"
+                   class="btn btn-outline-primary btn-sm w-100">
+                    Browse this seller's books
+                </a>
+            </div>
+        </div>
+
+        <!--Rating breakdow-->
+        @if (reviews!.Any())
+        {
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="mb-3">Rating breakdown</h6>
+                    @foreach (var row in ViewBag.RatingBreakdown)
+                    {
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span class="text-muted small" style="min-width:14px">
+                                @row.Star
+                            </span>
+                            <span style="color:#f59e0b;font-size:13px">★</span>
+                            <div class="flex-grow-1 bg-light rounded-pill overflow-hidden"
+                                 style="height:8px">
+                                <div class="bg-warning rounded-pill h-100"
+                                     style="width:@(row.Pct)%"></div>
+                            </div>
+                            <span class="text-muted small" style="min-width:20px">
+                                @row.Count
+                            </span>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+    </div>
+
+    <!--Right: reviews list-->
+    <div class="col-md-8">
+
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <h5 class="mb-0">
+                Reviews
+                @if (reviews!.Any())
+                {
+                    <span class="text-muted fw-normal fs-6 ms-1">
+                        (@reviews.Count)
+                    </span>
+                }
+            </h5>
+        </div>
+
+        @if (!reviews!.Any())
+        {
+            <div class="card border-0 bg-light text-center py-5">
+                <div style="font-size:40px" class="mb-2">⭐</div>
+                <p class="text-muted mb-0">
+                    No reviews yet — be the first to review this seller!
+                </p>
+            </div>
+        }
+        else
+        {
+            <div class="d-flex flex-column gap-3">
+                @foreach (var review in reviews!)
+                {
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <span class="fw-semibold">
+                                        @review.Reviewer.DisplayUsername
+                                    </span>
+                                    <span class="text-muted small ms-2">
+                                        for <em>@review.Transaction?.Listing?.Title</em>
+                                    </span>
+                                </div>
+                                <span class="text-muted small flex-shrink-0 ms-3">
+                                    @review.CreatedAt.ToString("dd MMM yyyy")
+                                </span>
+                            </div>
+
+                            <!-- Stars -->
+                            <div class="mb-2">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    <span style="font-size:18px;
+                                        color:@(i <= review.Rating ? "#f59e0b" : "#dee2e6")">
+                                        ★
+                                    </span>
+                                }
+                                <span class="text-muted small ms-1">
+                                    @review.Rating / 5
+                                </span>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(review.Comment))
+                            {
+                                <p class="mb-0 text-dark" style="line-height:1.6">
+                                    @review.Comment
+                                </p>
+                            }
+                            else
+                            {
+                                <p class="mb-0 text-muted fst-italic small">
+                                    No comment left.
+                                </p>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
+    </div>
+</div>

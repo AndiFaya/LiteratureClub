@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
 
 namespace LiteratureClub.Controllers
 {
@@ -82,7 +83,7 @@ namespace LiteratureClub.Controllers
                 bid.Listing, bid.BidderId, bid.OfferAmount);
         }
 
-        // ── GET (PayFast redirect page)
+        // GET (PayFast redirect page)
         [HttpGet]
         public async Task<IActionResult> Pay(int id)
         {
@@ -102,6 +103,7 @@ namespace LiteratureClub.Controllers
                 return RedirectToAction("Detail", new { id });
             }
 
+
             var buyer = transaction.Buyer;
             var paymentData = _payFast.BuildPaymentData(
                 transactionId: transaction.Id,
@@ -115,8 +117,11 @@ namespace LiteratureClub.Controllers
             ViewBag.PayFastUrl = _payFast.GetSandboxUrl();
             ViewBag.PaymentData = paymentData;
             ViewBag.Transaction = transaction;
+            ViewBag.SignatureInput = _payFast.GetSignatureString(paymentData); // ← ADD THIS
             return View();
         }
+
+
 
         // PayFast redirects the BROWSER here after payment.
         [HttpGet]

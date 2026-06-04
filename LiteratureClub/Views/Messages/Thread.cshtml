@@ -1,0 +1,179 @@
+﻿@{
+    ViewData["Title"] = "Message Thread";
+
+    var transaction = ViewBag.Transaction as LiteratureClub.Models.Transaction;
+    var messages = ViewBag.Messages as List<LiteratureClub.Models.Message>;
+    var currentUserId = ViewBag.CurrentUserId as string;
+    var otherParty = ViewBag.OtherParty as LiteratureClub.Models.ApplicationUser;
+    var isBuyer = (bool)ViewBag.IsBuyer;
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a asp-controller="Messages" asp-action="Inbox">Messages</a>
+        </li>
+        <li class="breadcrumb-item active">@transaction?.Listing?.Title</li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+
+        <!-- Thread header -->
+        <div class="card shadow-sm mb-3">
+            <div class="card-body py-3 d-flex align-items-center justify-content-between gap-3">
+                <div>
+                    <div class="fw-semibold">@transaction?.Listing?.Title</div>
+                    <div class="text-muted small">
+                        Conversation with <strong>@otherParty?.DisplayUsername</strong>
+                        · @(isBuyer ? "You are the buyer" : "You are the seller")
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <a asp-controller="Transactions" asp-action="Detail"
+                       asp-route-id="@transaction?.Id"
+                       class="btn btn-outline-secondary btn-sm">
+                        View Transaction
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!--Message thread-->
+        <div class="card shadow-sm mb-3">
+            <div class="card-body p-3"
+                 id="message-thread"
+                 style="max-height:480px;overflow-y:auto;display:flex;flex-direction:column;gap:12px">
+
+                @if (!messages!.Any())
+                {
+                    <div class="text-center text-muted py-5">
+                        <div style="font-size:40px" class="mb-2">💬</div>
+                        <p class="mb-0">No messages yet. Send the first one below.</p>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var msg in messages!)
+                    {
+                        var isMe = msg.SenderId == currentUserId;
+                        <div class="d-flex @(isMe ? "justify-content-end" : "justify-content-start")">
+                            <div style="max-width:75%">
+                                @if (!isMe)
+                                {
+                                    <div class="text-muted mb-1" style="font-size:11px">
+                                        @msg.Sender.DisplayUsername
+                                    </div>
+                                }
+                                <div class="rounded-3 px-3 py-2"
+                                     style="background:@(isMe ? "#0d6efd" : "#f1f3f5");
+                                    color:@(isMe ? "#fff" : "#1a1a2e");
+                                    font-size:14px;
+                                    border-bottom-right-radius:@(isMe ? "4px" : "12px") !important;
+                                    border-bottom-left-radius:@(isMe ? "12px" : "4px") !important">
+                                    @msg.Content
+                                </div>
+                                <div class="text-muted mt-1 @(isMe ? "text-end" : "")"
+                                     style="font-size:10px">
+                                    @msg.SentAt.ToLocalTime().ToString("dd MMM HH:mm")
+                                    @if (isMe)
+                                    {
+                                        <span class="ms-1">@(msg.IsRead ? "✓✓" : "✓")</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+
+        <!--Compose box-->
+        @{
+            var txStatus = transaction?.Status;
+            var canMessage = txStatus != LiteratureClub.Models.TransactionStatus.Completed &&
+                             txStatus != LiteratureClub.Models.TransactionStatus.Refunded;
+        }
+
+        @if (canMessage)
+        {
+            <form asp-controller="Messages" asp-action="Send"
+                  method="post" id="message-form">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="transactionId" value="@transaction?.Id" />
+
+                <div class="card shadow-sm">
+                    <div class="card-body p-3">
+                        <div class="d-flex gap-2 align-items-end">
+                            <textarea name="content"
+                                      id="message-input"
+                                      class="form-control"
+                                      rows="2"
+                                      maxlength="2000"
+                                      placeholder="Type your message…"
+                                      style="resize:none"
+                                      required></textarea>
+                            <button type="submit"
+                                    class="btn btn-primary px-4"
+                                    style="height:fit-content">
+                                Send
+                            </button>
+                        </div>
+                        <div class="d-flex justify-content-between mt-1">
+                            <span class="text-muted" style="font-size:11px">
+                                Press Enter to send, Shift+Enter for new line
+                            </span>
+                            <span class="text-muted" style="font-size:11px"
+                                  id="char-count">0 / 2000</span>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        }
+        else
+        {
+            <div class="alert alert-secondary text-center">
+                This transaction is <strong>@txStatus</strong> — messaging is closed.
+            </div>
+        }
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Scroll thread to bottom on load
+        const thread = document.getElementById('message-thread');
+        if (thread) thread.scrollTop = thread.scrollHeight;
+
+        // Character counter
+        const input = document.getElementById('message-input');
+        const counter = document.getElementById('char-count');
+        if (input && counter) {
+            input.addEventListener('input', function () {
+                counter.textContent = this.value.length + ' / 2000';
+            });
+        }
+
+        // Enter to send (Shift+Enter for new line)
+        if (input) {
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (this.value.trim().length > 0) {
+                        document.getElementById('message-form').submit();
+                    }
+                }
+            });
+        }
+    </script>
+}

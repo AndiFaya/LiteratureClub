@@ -20,7 +20,7 @@
 
 <div class="row g-4">
 
-    <!-- ── Left: image + seller card ───────────────────────────────────── -->
+    <!--Left: image + seller card-->
     <div class="col-md-4 col-lg-3">
         @if (!string.IsNullOrEmpty(Model.ImagePath))
         {
@@ -30,7 +30,9 @@
         else
         {
             <div class="bg-light rounded d-flex align-items-center justify-content-center mb-3"
-                 style="height:220px;font-size:64px;">📚</div>
+                 style="height:220px;font-size:64px;">
+                📚
+            </div>
         }
 
         <div class="card shadow-sm mb-3">
@@ -72,7 +74,7 @@
                     </form>
                 }
 
-                @if (Model.IsOwnListing)
+                @if (Model.IsOwnListing && Model.Status == LiteratureClub.Models.ListingStatus.Available)
                 {
                     <a asp-action="Edit" asp-route-id="@Model.Id"
                        class="btn btn-outline-primary w-100 mb-2">Edit Listing</a>
@@ -84,11 +86,17 @@
                         </button>
                     </form>
                 }
+                else if (Model.IsOwnListing)
+                {
+                    <div class="alert alert-secondary py-2 small text-center">
+                        This listing is <strong>@Model.Status</strong> and cannot be edited or removed.
+                    </div>
+                }
             </div>
         </div>
     </div>
 
-    <!-- ── Right: book info + bids ─────────────────────────────────────── -->
+    <!--Right: book info + bids-->
     <div class="col-md-8 col-lg-9">
         <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
             <span class="badge @(Model.Condition == LiteratureClub.Models.BookCondition.New ? "bg-success" : "bg-warning text-dark")">
