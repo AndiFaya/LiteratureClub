@@ -4,13 +4,15 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <RootNamespace>BookSwap</RootNamespace>
-    <AssemblyName>BookSwap</AssemblyName>
+    <RootNamespace>LiteratureClub</RootNamespace>
+    <AssemblyName>LiteratureClub</AssemblyName>
     <UserSecretsId>71971dd2-34f5-4cd3-8ed8-6742e9de124a</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
     <!-- EF Core with SQL Server -->
+    <PackageReference Include="Azure.AI.OpenAI" Version="2.3.0-beta.2" />
+    <PackageReference Include="Google.GenAI" Version="1.7.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.0">
       <PrivateAssets>all</PrivateAssets>
@@ -29,6 +31,10 @@
 
     <!-- Image handling for listing uploads -->
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Service\" />
   </ItemGroup>
 
 </Project>

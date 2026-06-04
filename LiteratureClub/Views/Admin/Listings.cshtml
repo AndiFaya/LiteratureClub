@@ -1,0 +1,54 @@
+﻿@using LiteratureClub.Models;
+
+@model IEnumerable<LiteratureClub.Models.Listing>
+@{
+    ViewData["Title"] = "Manage Book Listings";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>📚 Marketplace Control: Book Listings</h2>
+        <a asp-controller="Admin" asp-action="Index" class="btn btn-outline-secondary btn-sm">Back to Console</a>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Title</th>
+                        <th>Author</th>
+                        <th>Price</th>
+                        <th>Seller Name</th>
+                        <th>Condition</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">No active book listings found in the marketplace.</td>
+                        </tr>
+                    }
+                    @foreach (var listing in Model)
+                    {
+                        <tr>
+                            <td><strong>@listing.Title</strong></td>
+                            <td>@listing.Author</td>
+                            <td class="text-success fw-bold">R @listing.Price</td>
+                            <td>@listing.Seller?.DisplayUsername</td>
+                            <td><span class="badge bg-secondary">@listing.Condition</span></td>
+                            <td class="text-end">
+                                <form asp-action="RemoveListing" method="post" onsubmit="return confirm('Are you sure you want to remove this book listing? This action cannot be undone.');" class="m-0">
+                                    <input type="hidden" name="listingId" value="@listing.Id" />
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">Remove Item</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

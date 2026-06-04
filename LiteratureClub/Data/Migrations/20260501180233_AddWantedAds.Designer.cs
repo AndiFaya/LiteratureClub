@@ -25,7 +25,7 @@ namespace LiteratureClub.Data.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("BookSwap.Models.WantedAd", b =>
+            modelBuilder.Entity("LiteratureClub.Models.WantedAd", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
