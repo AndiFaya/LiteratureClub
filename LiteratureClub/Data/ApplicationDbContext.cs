@@ -1,5 +1,4 @@
 ﻿using LiteratureClub.Models;
-using LiteratureClub.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using SixLabors.ImageSharp;
