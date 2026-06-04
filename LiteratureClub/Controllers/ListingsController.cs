@@ -121,18 +121,18 @@ namespace LiteratureClub.Controllers
 
             var vm = new ListingDetailViewModel
             {
-                // ... (your mapping is already perfect here)
+                
                 Bids = listing.Bids.OrderByDescending(b => b.CreatedAt).Select(b => new BidSummaryViewModel { /* mapping */ }).ToList()
             };
 
-            // Filling in the seller stats logic you already had
+            
             vm.SellerRating = reviews.Any() ? reviews.Average(r => r.Rating) : 0;
             vm.SellerReviewCount = reviews.Count;
 
             return View(vm);
         }
 
-        // --- HELPER METHODS (Private & Clean) ---
+        // --- HELPER METHODS ---
 
         private async Task<List<DropdownOption>> GetCategoryOptionsAsync()
         {
@@ -151,7 +151,5 @@ namespace LiteratureClub.Controllers
                 .Select(c => new DropdownOption { Id = c.Id, Label = $"{c.Code} – {c.CourseName}" })
                 .ToListAsync();
         }
-
-        // ... Create, Edit, Delete, ToggleWatchlist logic (These are fine as is!)
     }
 }
