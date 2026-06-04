@@ -251,6 +251,13 @@ namespace LiteratureClub.Controllers
             var currentUserId = _userManager.GetUserId(User);
             if (listing.SellerId != currentUserId) return Forbid();
 
+            // Block if listing is no longer Available
+            if (listing.Status != ListingStatus.Available)
+            {
+                TempData["Error"] = "This listing can no longer be edited — a bid has been accepted or a transaction is in progress.";
+                return RedirectToAction(nameof(Detail), new { id });
+            }
+
             var vm = new ListingFormViewModel
             {
                 Id = listing.Id,
@@ -287,6 +294,13 @@ namespace LiteratureClub.Controllers
 
             var currentUserId = _userManager.GetUserId(User);
             if (listing.SellerId != currentUserId) return Forbid();
+
+            // Block if listing is no longer Available
+            if (listing.Status != ListingStatus.Available)
+            {
+                TempData["Error"] = "This listing can no longer be edited — a bid has been accepted or a transaction is in progress.";
+                return RedirectToAction(nameof(Detail), new { id });
+            }
 
             if (vm.Condition == BookCondition.Used &&
                 string.IsNullOrWhiteSpace(vm.ConditionDescription))
@@ -349,6 +363,13 @@ namespace LiteratureClub.Controllers
 
             var currentUserId = _userManager.GetUserId(User);
             if (listing.SellerId != currentUserId) return Forbid();
+
+            // Block if listing is no longer Available
+            if (listing.Status != ListingStatus.Available)
+            {
+                TempData["Error"] = "This listing cannot be removed — a bid has been accepted or a transaction is in progress.";
+                return RedirectToAction(nameof(Detail), new { id });
+            }
 
             listing.Status = ListingStatus.Removed;
             listing.UpdatedAt = DateTime.UtcNow;
