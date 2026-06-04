@@ -1,0 +1,100 @@
+﻿@model List<LiteratureClub.Controllers.MessageThreadViewModel>
+@{
+    ViewData["Title"] = "Messages";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <h2 class="mb-0">Messages</h2>
+    @{
+        var totalUnread = Model.Sum(t => t.UnreadCount);
+    }
+    @if (totalUnread > 0)
+    {
+        <span class="badge bg-danger fs-6">@totalUnread unread</span>
+    }
+</div>
+
+@if (!Model.Any())
+{
+    <div class="text-center py-5 text-muted">
+        <div style="font-size:56px" class="mb-3">💬</div>
+        <p class="fs-5 mb-1">No active conversations</p>
+        <p class="small">
+            Message threads appear here once a payment is confirmed on a transaction.
+        </p>
+        <a asp-controller="Listings" asp-action="Index"
+           class="btn btn-primary btn-sm mt-2">Browse Books</a>
+    </div>
+}
+else
+{
+    <div class="d-flex flex-column gap-2">
+        @foreach (var thread in Model)
+        {
+            <a asp-controller="Messages" asp-action="Thread"
+               asp-route-transactionId="@thread.TransactionId"
+               class="text-decoration-none">
+                <div class="card shadow-sm @(thread.UnreadCount > 0 ? "border-primary" : "")">
+                    <div class="card-body py-3 px-4 d-flex align-items-center gap-3">
+
+                        <!-- Avatar -->
+                        <div class="rounded-circle bg-primary d-flex align-items-center
+                            justify-content-center text-white fw-bold flex-shrink-0"
+                             style="width:44px;height:44px;font-size:16px">
+                            @thread.OtherPartyName.Substring(0, 1).ToUpper()
+                        </div>
+
+                        <!-- Content -->
+                        <div class="flex-grow-1 overflow-hidden">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-semibold @(thread.UnreadCount > 0 ? "text-primary" : "text-dark")">
+                                    @thread.OtherPartyName
+                                </span>
+                                <span class="text-muted flex-shrink-0 ms-2" style="font-size:11px">
+                                    @if (thread.LastMessageAt.HasValue)
+                                    {
+                                        @thread.LastMessageAt.Value.ToLocalTime().ToString("dd MMM HH:mm")
+                                    }
+                                </span>
+                            </div>
+
+                            <div class="small text-truncate">
+                                @if (thread.HasMessages)
+                                {
+                                    <span class="text-muted">
+                                        <strong>@thread.BookTitle</strong>
+                                        · @(thread.LastMessageWasMine == true ? "You: " : "")@thread.LastMessagePreview
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-primary fst-italic">
+                                        📋 @thread.BookTitle — Tap to start the conversation
+                                    </span>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Right indicator -->
+                        @if (thread.UnreadCount > 0)
+                        {
+                            <span class="badge bg-primary rounded-pill flex-shrink-0">
+                                @thread.UnreadCount
+                            </span>
+                        }
+                        else if (!thread.HasMessages)
+                        {
+                            <span class="badge bg-warning text-dark flex-shrink-0"
+                                  style="font-size:10px">New</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted flex-shrink-0" style="font-size:16px">›</span>
+                        }
+
+                    </div>
+                </div>
+            </a>
+        }
+    </div>
+}

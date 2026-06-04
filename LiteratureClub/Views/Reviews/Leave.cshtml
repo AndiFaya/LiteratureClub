@@ -1,0 +1,136 @@
+﻿@{
+    ViewData["Title"] = "Review Seller";
+    var transaction = ViewBag.Transaction as LiteratureClub.Models.Transaction;
+}
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-6">
+
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a asp-controller="Dashboard" asp-action="Index">Dashboard</a>
+                </li>
+                <li class="breadcrumb-item active">Leave a Review</li>
+            </ol>
+        </nav>
+
+        <h2 class="mb-1">Review Seller</h2>
+        <p class="text-muted mb-4">
+            Share your experience with
+            <strong>@transaction?.Seller?.DisplayUsername</strong>
+            for <em>@transaction?.Listing?.Title</em>.
+        </p>
+
+        <form asp-controller="Reviews" asp-action="Submit" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="transactionId" value="@transaction?.Id" />
+
+            <!--Star rating-->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body text-center py-4">
+                    <p class="text-muted small mb-3 text-uppercase fw-semibold"
+                       style="letter-spacing:1px">
+                        Your Rating
+                    </p>
+
+                    <div class="star-selector mb-2" id="starSelector">
+                        @for (int i = 5; i >= 1; i--)
+                        {
+                            <input type="radio" name="rating" value="@i"
+                                   id="star@(i)" class="d-none"
+                                   required @(i == 5 ? "" : "") />
+                            <label for="star@(i)"
+                                   class="star-label"
+                                   style="font-size:44px;cursor:pointer;color:#dee2e6;
+                                transition:color .15s">
+                                ★
+                            </label>
+                        }
+                    </div>
+
+                    <div id="ratingLabel" class="fw-semibold text-muted" style="font-size:15px">
+                        Click a star to rate
+                    </div>
+                </div>
+            </div>
+
+            <!--Comment-->
+            <div class="mb-4">
+                <label for="comment" class="form-label fw-semibold">
+                    Comment
+                    <span class="text-muted fw-normal">(optional)</span>
+                </label>
+                <textarea name="comment" id="comment" class="form-control"
+                          rows="4" maxlength="2000"
+                          placeholder="Tell others about your experience — was the book as described? Did the seller communicate well? Was the exchange smooth?"></textarea>
+                <div class="d-flex justify-content-end mt-1">
+                    <span class="text-muted" style="font-size:11px"
+                          id="charCount">0 / 2000</span>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold"
+                    id="submitBtn" disabled>
+                Submit Review
+            </button>
+        </form>
+
+        <div class="text-center mt-3">
+            <a asp-controller="Dashboard" asp-action="Index"
+               class="text-muted small">Cancel — back to dashboard</a>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    /* Stars display right-to-left */
+    .star-selector {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: center;
+        gap: 4px;
+    }
+
+    /* Highlight hovered star and all stars to its right */
+    .star-selector .star-label:hover,
+    .star-selector .star-label:hover ~ .star-label {
+        color: #f59e0b !important;
+    }
+
+    /* Highlight selected star and all stars to its right */
+    .star-selector input:checked ~ .star-label {
+        color: #f59e0b !important;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        const labels = {
+            1: '⭐ Poor',
+            2: '⭐⭐ Fair',
+            3: '⭐⭐⭐ Good',
+            4: '⭐⭐⭐⭐ Very Good',
+            5: '⭐⭐⭐⭐⭐ Excellent!'
+        };
+
+        const radios    = document.querySelectorAll('input[name="rating"]');
+        const ratingLbl = document.getElementById('ratingLabel');
+        const submitBtn = document.getElementById('submitBtn');
+        const comment   = document.getElementById('comment');
+        const charCount = document.getElementById('charCount');
+
+        radios.forEach(radio => {
+            radio.addEventListener('change', function () {
+                ratingLbl.textContent = labels[this.value] || '';
+                ratingLbl.className   = 'fw-semibold text-warning';
+                submitBtn.disabled    = false;
+            });
+        });
+
+        comment.addEventListener('input', function () {
+            charCount.textContent = this.value.length + ' / 2000';
+        });
+    </script>
+}

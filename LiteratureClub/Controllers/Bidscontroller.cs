@@ -118,12 +118,26 @@ namespace LiteratureClub.Controllers
             bid.Listing.Status = ListingStatus.UnderOffer;
             bid.Listing.UpdatedAt = DateTime.UtcNow;
 
+            // Creating the transaction for the buyer directly
+            // Wont redirect to Pay the seller cannot access that page.
+            // The buyer will see the pending transaction in their dashboard and can complete payment from there.
+            var transaction = new Transaction
+            {
+                ListingId = bid.ListingId,
+                BuyerId = bid.BidderId,
+                SellerId = bid.Listing.SellerId,
+                Amount = bid.OfferAmount,
+                Status = TransactionStatus.PaymentPending
+            };
+            _context.Transactions.Add(transaction);
+
             await _context.SaveChangesAsync();
 
-            // Redirect buyer to payment initiation
-            TempData["Success"] = "Bid accepted. The buyer will now be prompted to pay.";
-            return RedirectToAction("InitiateFromBid", "Transactions",
-                new { bidId = bid.Id });
+            TempData["Success"] =
+                $"Bid accepted! The buyer has been notified to complete " +
+                $"payment of R {bid.OfferAmount:N2}. " +
+                "They will see the transaction in their dashboard.";
+            return RedirectToAction("Index", "Dashboard");
         }
 
         //POST /Bids/Reject
