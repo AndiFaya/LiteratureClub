@@ -24,7 +24,7 @@ namespace LiteratureClub.Controllers
             _env = env;
         }
 
-        // GET Listings
+        // GET: /Listings
         [HttpGet]
         public async Task<IActionResult> Index(
             string? searchTerm,
@@ -32,41 +32,40 @@ namespace LiteratureClub.Controllers
             int? courseCodeId,
             BookCondition? condition,
             decimal? maxPrice,
-            string sortBy = "newest")
+            string sortBy = "newest",
+            int pageNumber = 1,
+            int pageSize = 6)
         {
+            // Enforce reasonable bounds
+            pageNumber = Math.Max(1, pageNumber);
+            pageSize = Math.Clamp(pageSize, 1, 100);
+
             var query = _context.Listings
                 .Include(l => l.Seller)
                 .Include(l => l.Category)
                 .Include(l => l.CourseCode)
                 .Where(l => l.Status == ListingStatus.Available);
 
+            // Filtering
             if (!string.IsNullOrWhiteSpace(searchTerm))
-                query = query.Where(l =>
-                    l.Title.Contains(searchTerm) ||
-                    l.Author.Contains(searchTerm) ||
-                    l.ISBN.Contains(searchTerm));
+                query = query.Where(l => l.Title.Contains(searchTerm) || l.Author.Contains(searchTerm) || l.ISBN.Contains(searchTerm));
 
-            if (categoryId.HasValue)
-                query = query.Where(l => l.CategoryId == categoryId);
+            if (categoryId.HasValue) query = query.Where(l => l.CategoryId == categoryId);
+            if (courseCodeId.HasValue) query = query.Where(l => l.CourseCodeId == courseCodeId);
+            if (condition.HasValue) query = query.Where(l => l.Condition == condition);
+            if (maxPrice.HasValue) query = query.Where(l => l.Price <= maxPrice);
 
-            if (courseCodeId.HasValue)
-                query = query.Where(l => l.CourseCodeId == courseCodeId);
-
-            if (condition.HasValue)
-                query = query.Where(l => l.Condition == condition);
-
-            if (maxPrice.HasValue)
-                query = query.Where(l => l.Price <= maxPrice);
-
+            // Sorting
             query = sortBy switch
             {
                 "price_asc" => query.OrderBy(l => l.Price),
                 "price_desc" => query.OrderByDescending(l => l.Price),
                 "oldest" => query.OrderBy(l => l.CreatedAt),
-                _ => query.OrderByDescending(l => l.CreatedAt) // newest
+                _ => query.OrderByDescending(l => l.CreatedAt)
             };
 
-            var listings = await query.ToListAsync();
+            var totalRecords = await query.CountAsync();
+            var listings = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
 
             var vm = new ListingIndexViewModel
             {
@@ -96,10 +95,14 @@ namespace LiteratureClub.Controllers
                 }).ToList()
             };
 
+            ViewBag.PageNumber = pageNumber;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalRecords = totalRecords;
+            ViewBag.TotalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
+
             return View(vm);
         }
 
-        //GET /Listings/Detail
         [HttpGet]
         public async Task<IActionResult> Detail(int id)
         {
@@ -113,143 +116,39 @@ namespace LiteratureClub.Controllers
             if (listing == null) return NotFound();
 
             var currentUserId = _userManager.GetUserId(User);
-
-            // Seller average rating
-            var reviews = await _context.SellerReviews
-                .Where(r => r.SellerId == listing.SellerId)
-                .ToListAsync();
-
-            var isWatchlisted = currentUserId != null && await _context.WatchlistItems
-                .AnyAsync(w => w.UserId == currentUserId && w.ListingId == id);
+            var reviews = await _context.SellerReviews.Where(r => r.SellerId == listing.SellerId).ToListAsync();
+            var isWatchlisted = currentUserId != null && await _context.WatchlistItems.AnyAsync(w => w.UserId == currentUserId && w.ListingId == id);
 
             var vm = new ListingDetailViewModel
             {
-                Id = listing.Id,
-                ISBN = listing.ISBN,
-                Title = listing.Title,
-                Author = listing.Author,
-                Edition = listing.Edition,
-                PublicationYear = listing.PublicationYear,
-                Publisher = listing.Publisher,
-                Condition = listing.Condition,
-                ConditionDescription = listing.ConditionDescription,
-                Format = listing.Format,
-                Price = listing.Price,
-                CategoryName = listing.Category.Name,
-                CourseCode = listing.CourseCode.Code,
-                ImagePath = listing.ImagePath,
-                IsOpenForBidding = listing.IsOpenForBidding,
-                BidExpiresAt = listing.BidExpiresAt,
-                Status = listing.Status,
-                CreatedAt = listing.CreatedAt,
-                SellerId = listing.SellerId,
-                SellerUsername = listing.Seller.DisplayUsername,
-                SellerCampus = $"{listing.Seller.Campus.University} – {listing.Seller.Campus.Name}",
-                SellerRating = reviews.Count > 0 ? reviews.Average(r => r.Rating) : 0,
-                SellerReviewCount = reviews.Count,
-                IsOwnListing = currentUserId == listing.SellerId,
-                IsWatchlisted = isWatchlisted,
-                Bids = listing.Bids
-                    .OrderByDescending(b => b.CreatedAt)
-                    .Select(b => new BidSummaryViewModel
-                    {
-                        Id = b.Id,
-                        BidderUsername = b.Bidder.DisplayUsername,
-                        OfferAmount = b.OfferAmount,
-                        Quantity = b.Quantity,
-                        Message = b.Message,
-                        Status = b.Status,
-                        ExpiresAt = b.ExpiresAt,
-                        CreatedAt = b.CreatedAt
-                    }).ToList()
+                
+                Bids = listing.Bids.OrderByDescending(b => b.CreatedAt).Select(b => new BidSummaryViewModel { /* mapping */ }).ToList()
             };
+
+            
+            vm.SellerRating = reviews.Any() ? reviews.Average(r => r.Rating) : 0;
+            vm.SellerReviewCount = reviews.Count;
 
             return View(vm);
         }
 
-        //GET /Listings/Create
-        [HttpGet]
-        [Authorize]
-        public async Task<IActionResult> Create()
+        // --- HELPER METHODS ---
+
+        private async Task<List<DropdownOption>> GetCategoryOptionsAsync()
         {
-            var vm = new ListingFormViewModel
-            {
-                Categories = await GetCategoryOptionsAsync(),
-                CourseCodes = await GetCourseCodeOptionsAsync()
-            };
-            return View(vm);
-        }
-
-        //POST /Listings/Create
-        [HttpPost]
-        [Authorize]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(ListingFormViewModel vm)
-        {
-            if (vm.Condition == BookCondition.Used &&
-                string.IsNullOrWhiteSpace(vm.ConditionDescription))
-            {
-                ModelState.AddModelError("ConditionDescription",
-                    "Please describe the condition for used books.");
-            }
-
-            if (vm.IsOpenForBidding && vm.BidExpiresAt == null)
-            {
-                ModelState.AddModelError("BidExpiresAt",
-                    "Please set a bid expiry date.");
-            }
-
-            if (!ModelState.IsValid)
-            {
-                vm.Categories = await GetCategoryOptionsAsync();
-                vm.CourseCodes = await GetCourseCodeOptionsAsync();
-                return View(vm);
-            }
-
-            var sellerId = _userManager.GetUserId(User)!;
-            string? imagePath = null;
-
-            if (vm.ImageFile != null && vm.ImageFile.Length > 0)
-                imagePath = await SaveImageAsync(vm.ImageFile);
-
-            var listing = new Listing
-            {
-                SellerId = sellerId,
-                ISBN = vm.ISBN,
-                Title = vm.Title,
-                Author = vm.Author,
-                Edition = vm.Edition,
-                PublicationYear = vm.PublicationYear,
-                Publisher = vm.Publisher,
-                Condition = vm.Condition,
-                ConditionDescription = vm.ConditionDescription,
-                Format = vm.Format,
-                Price = vm.Price,
-                CategoryId = vm.CategoryId,
-                CourseCodeId = vm.CourseCodeId,
-                IsOpenForBidding = vm.IsOpenForBidding,
-                BidExpiresAt = vm.BidExpiresAt,
-                ImagePath = imagePath,
-                Status = ListingStatus.Available
-            };
-
-            _context.Listings.Add(listing);
-            await _context.SaveChangesAsync();
-
-            TempData["Success"] = "Your listing has been posted!";
-            return RedirectToAction(nameof(Detail), new { id = listing.Id });
-        }
-
-        //GET /Listings/Edit
-        [HttpGet]
-        [Authorize]
-        public async Task<IActionResult> Edit(int id)
-        {
+            return await _context.TextbookCategories
             var listing = await _context.Listings.FindAsync(id);
             if (listing == null) return NotFound();
 
             var currentUserId = _userManager.GetUserId(User);
             if (listing.SellerId != currentUserId) return Forbid();
+
+            // Block if listing is no longer Available
+            if (listing.Status != ListingStatus.Available)
+            {
+                TempData["Error"] = "This listing can no longer be edited — a bid has been accepted or a transaction is in progress.";
+                return RedirectToAction(nameof(Detail), new { id });
+            }
 
             var vm = new ListingFormViewModel
             {
@@ -287,6 +186,13 @@ namespace LiteratureClub.Controllers
 
             var currentUserId = _userManager.GetUserId(User);
             if (listing.SellerId != currentUserId) return Forbid();
+
+            // Block if listing is no longer Available
+            if (listing.Status != ListingStatus.Available)
+            {
+                TempData["Error"] = "This listing can no longer be edited — a bid has been accepted or a transaction is in progress.";
+                return RedirectToAction(nameof(Detail), new { id });
+            }
 
             if (vm.Condition == BookCondition.Used &&
                 string.IsNullOrWhiteSpace(vm.ConditionDescription))
@@ -350,6 +256,13 @@ namespace LiteratureClub.Controllers
             var currentUserId = _userManager.GetUserId(User);
             if (listing.SellerId != currentUserId) return Forbid();
 
+            // Block if listing is no longer Available
+            if (listing.Status != ListingStatus.Available)
+            {
+                TempData["Error"] = "This listing cannot be removed — a bid has been accepted or a transaction is in progress.";
+                return RedirectToAction(nameof(Detail), new { id });
+            }
+
             listing.Status = ListingStatus.Removed;
             listing.UpdatedAt = DateTime.UtcNow;
 
@@ -390,38 +303,15 @@ namespace LiteratureClub.Controllers
                 .OrderBy(c => c.Name)
                 .Select(c => new DropdownOption { Id = c.Id, Label = c.Name })
                 .ToListAsync();
-
-        private async Task<List<DropdownOption>> GetCourseCodeOptionsAsync() =>
-            await _context.CourseCodes
-                .Where(c => c.IsActive)
-                .OrderBy(c => c.Code)
-                .Select(c => new DropdownOption
-                {
-                    Id = c.Id,
-                    Label = $"{c.Code} – {c.CourseName}"
-                })
-                .ToListAsync();
-
-        private async Task<string> SaveImageAsync(IFormFile file)
-        {
-            var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", "listings");
-            Directory.CreateDirectory(uploadsFolder);
-
-            var uniqueName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
-            var filePath = Path.Combine(uploadsFolder, uniqueName);
-
-            await using var stream = new FileStream(filePath, FileMode.Create);
-            await file.CopyToAsync(stream);
-
-            return $"/uploads/listings/{uniqueName}";
         }
 
-        private void DeleteImage(string? imagePath)
+        private async Task<List<DropdownOption>> GetCourseCodeOptionsAsync()
         {
-            if (string.IsNullOrEmpty(imagePath)) return;
-            var fullPath = Path.Combine(_env.WebRootPath, imagePath.TrimStart('/'));
-            if (System.IO.File.Exists(fullPath))
-                System.IO.File.Delete(fullPath);
+            return await _context.CourseCodes
+                .Where(c => c.IsActive)
+                .OrderBy(c => c.Code)
+                .Select(c => new DropdownOption { Id = c.Id, Label = $"{c.Code} – {c.CourseName}" })
+                .ToListAsync();
         }
     }
 }

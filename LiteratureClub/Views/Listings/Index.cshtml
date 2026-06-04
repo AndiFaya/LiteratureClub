@@ -12,6 +12,9 @@
 </div>
 
 <form method="get" asp-action="Index">
+    <input type="hidden" name="pageNumber" value="1" />
+    <input type="hidden" name="pageSize" value="@ViewBag.PageSize" />
+
     <div class="row g-2 mb-3">
         <div class="col-md-4">
             <input type="text" name="searchTerm" value="@Model.SearchTerm"
@@ -84,18 +87,15 @@ else
         @foreach (var listing in Model.Listings)
         {
             <div class="col">
-                <a asp-action="Detail" asp-route-id="@listing.Id"
-                   class="text-decoration-none text-dark">
+                <a asp-action="Detail" asp-route-id="@listing.Id" class="text-decoration-none text-dark">
                     <div class="card h-100 shadow-sm">
                         @if (!string.IsNullOrEmpty(listing.ImagePath))
                         {
-                            <img src="@listing.ImagePath" class="card-img-top"
-                                 style="height:140px;object-fit:cover;" alt="@listing.Title" />
+                            <img src="@listing.ImagePath" class="card-img-top" style="height:140px;object-fit:cover;" alt="@listing.Title" />
                         }
                         else
                         {
-                            <div class="card-img-top bg-light d-flex align-items-center
-                                        justify-content-center" style="height:140px;font-size:40px;">
+                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height:140px;font-size:40px;">
                                 📚
                             </div>
                         }
@@ -128,5 +128,43 @@ else
                 </a>
             </div>
         }
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+        <div class="text-muted small">
+            Showing Page <strong>@ViewBag.PageNumber</strong> of <strong>@ViewBag.TotalPages</strong>
+            (@ViewBag.TotalRecords total records available)
+        </div>
+        <nav>
+            <ul class="pagination mb-0">
+                @* --- Previous Button --- *@
+                <li class="page-item @(ViewBag.PageNumber <= 1 ? "disabled" : "")">
+                    @{
+                        var prevData = new Dictionary<string, string>();
+                        foreach (var key in Context.Request.Query.Keys)
+                        {
+                            prevData[key] = Context.Request.Query[key]!;
+                        }
+                        prevData["pageNumber"] = (ViewBag.PageNumber - 1).ToString();
+                        prevData["pageSize"] = (ViewBag.PageSize ?? 12).ToString();
+                    }
+                    <a class="page-link" asp-action="Index" asp-all-route-data="prevData">Previous</a>
+                </li>
+
+                @* --- Next Button --- *@
+                <li class="page-item @(ViewBag.PageNumber >= ViewBag.TotalPages ? "disabled" : "")">
+                    @{
+                        var nextData = new Dictionary<string, string>();
+                        foreach (var key in Context.Request.Query.Keys)
+                        {
+                            nextData[key] = Context.Request.Query[key]!;
+                        }
+                        nextData["pageNumber"] = (ViewBag.PageNumber + 1).ToString();
+                        nextData["pageSize"] = (ViewBag.PageSize ?? 12).ToString();
+                    }
+                    <a class="page-link" asp-action="Index" asp-all-route-data="nextData">Next</a>
+                </li>
+            </ul>
+        </nav>
     </div>
 }

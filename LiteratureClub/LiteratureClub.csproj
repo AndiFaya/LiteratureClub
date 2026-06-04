@@ -10,6 +10,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Include="Extensions\PaginationExtensions.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- EF Core with SQL Server -->
     <PackageReference Include="Azure.AI.OpenAI" Version="2.3.0-beta.2" />
     <PackageReference Include="Google.GenAI" Version="1.7.0" />
