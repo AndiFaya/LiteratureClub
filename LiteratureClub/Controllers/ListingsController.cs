@@ -1,6 +1,7 @@
 ﻿using LiteratureClub.Data;
 using LiteratureClub.Models;
 using LiteratureClub.ViewModels;
+using LiteratureClub.Extensions; // Make sure your extension folder is imported
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -24,7 +25,7 @@ namespace LiteratureClub.Controllers
             _env = env;
         }
 
-        // GET Listings
+        // GET: /Listings
         [HttpGet]
         public async Task<IActionResult> Index(
             string? searchTerm,
@@ -32,14 +33,21 @@ namespace LiteratureClub.Controllers
             int? courseCodeId,
             BookCondition? condition,
             decimal? maxPrice,
-            string sortBy = "newest")
+            string sortBy = "newest",
+            int pageNumber = 1,      // Added for pagination (Defaults to page 1)
+            int pageSize = 6)       // Added for pagination (Defaults to 12 listings per page)
         {
+            // Enforce reasonable bounds on inputs
+            pageNumber = pageNumber < 1 ? 1 : pageNumber;
+            pageSize = pageSize < 1 ? 12 : (pageSize > 100 ? 100 : pageSize);
+
             var query = _context.Listings
                 .Include(l => l.Seller)
                 .Include(l => l.Category)
                 .Include(l => l.CourseCode)
                 .Where(l => l.Status == ListingStatus.Available);
 
+            // Filtering logic
             if (!string.IsNullOrWhiteSpace(searchTerm))
                 query = query.Where(l =>
                     l.Title.Contains(searchTerm) ||
@@ -58,6 +66,7 @@ namespace LiteratureClub.Controllers
             if (maxPrice.HasValue)
                 query = query.Where(l => l.Price <= maxPrice);
 
+            // Sorting logic
             query = sortBy switch
             {
                 "price_asc" => query.OrderBy(l => l.Price),
@@ -66,7 +75,14 @@ namespace LiteratureClub.Controllers
                 _ => query.OrderByDescending(l => l.CreatedAt) // newest
             };
 
-            var listings = await query.ToListAsync();
+            // --- PAGINATION MATH HAPPENS HERE ---
+            var totalRecords = await query.CountAsync();
+
+            var listings = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+            // -------------------------------------
 
             var vm = new ListingIndexViewModel
             {
@@ -96,10 +112,16 @@ namespace LiteratureClub.Controllers
                 }).ToList()
             };
 
+            // Pass pagination data to the frontend View using ViewBag
+            ViewBag.PageNumber = pageNumber;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalRecords = totalRecords;
+            ViewBag.TotalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
+
             return View(vm);
         }
 
-        //GET /Listings/Detail
+        // GET: /Listings/Detail
         [HttpGet]
         public async Task<IActionResult> Detail(int id)
         {
@@ -114,7 +136,6 @@ namespace LiteratureClub.Controllers
 
             var currentUserId = _userManager.GetUserId(User);
 
-            // Seller average rating
             var reviews = await _context.SellerReviews
                 .Where(r => r.SellerId == listing.SellerId)
                 .ToListAsync();
@@ -167,7 +188,50 @@ namespace LiteratureClub.Controllers
             return View(vm);
         }
 
-        //GET /Listings/Create
+        // GET: /Listings/Create
+        [HttpGet]
+        [Authorize]
+        public async Task<List<DropdownOption>> GetCategoryOptionsAsync() =>
+            await _context.TextbookCategories
+                .Where(c => c.IsActive)
+                .OrderBy(c => c.Name)
+                .Select(c => new DropdownOption { Id = c.Id, Label = c.Name })
+                .ToListAsync();
+
+        private async Task<List<DropdownOption>> GetCourseCodeOptionsAsync() =>
+            await _context.CourseCodes
+                .Where(c => c.IsActive)
+                .OrderBy(c => c.Code)
+                .Select(c => new DropdownOption
+                {
+                    Id = c.Id,
+                    Label = $"{c.Code} – {c.CourseName}"
+                })
+                .ToListAsync();
+
+        private async Task<string> SaveImageAsync(IFormFile file)
+        {
+            var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", "listings");
+            Directory.CreateDirectory(uploadsFolder);
+
+            var uniqueName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+            var filePath = Path.Combine(uploadsFolder, uniqueName);
+
+            await using var stream = new FileStream(filePath, FileMode.Create);
+            await file.CopyToAsync(stream);
+
+            return $"/uploads/listings/{uniqueName}";
+        }
+
+        private void DeleteImage(string? imagePath)
+        {
+            if (string.IsNullOrEmpty(imagePath)) return;
+            var fullPath = Path.Combine(_env.WebRootPath, imagePath.TrimStart('/'));
+            if (System.IO.File.Exists(fullPath))
+                System.IO.File.Delete(fullPath);
+        }
+
+        // GET /Listings/Create
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> Create()
@@ -180,7 +244,7 @@ namespace LiteratureClub.Controllers
             return View(vm);
         }
 
-        //POST /Listings/Create
+        // POST /Listings/Create
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
@@ -240,7 +304,7 @@ namespace LiteratureClub.Controllers
             return RedirectToAction(nameof(Detail), new { id = listing.Id });
         }
 
-        //GET /Listings/Edit
+        // GET /Listings/Edit
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> Edit(int id)
@@ -276,7 +340,7 @@ namespace LiteratureClub.Controllers
             return View(vm);
         }
 
-        //POST /Listings/Edit
+        // POST /Listings/Edit
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
@@ -309,7 +373,6 @@ namespace LiteratureClub.Controllers
                 return View(vm);
             }
 
-            // Replace image only if a new one was uploaded
             if (vm.ImageFile != null && vm.ImageFile.Length > 0)
             {
                 DeleteImage(listing.ImagePath);
@@ -338,7 +401,7 @@ namespace LiteratureClub.Controllers
             return RedirectToAction(nameof(Detail), new { id = listing.Id });
         }
 
-        //POST /Listings/Delete
+        // POST /Listings/Delete
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
@@ -359,7 +422,7 @@ namespace LiteratureClub.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        //POST /Listings/ToggleWatchlist
+        // POST /Listings/ToggleWatchlist
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
@@ -381,47 +444,6 @@ namespace LiteratureClub.Controllers
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Detail), new { id });
-        }
-
-        //Helpers
-        private async Task<List<DropdownOption>> GetCategoryOptionsAsync() =>
-            await _context.TextbookCategories
-                .Where(c => c.IsActive)
-                .OrderBy(c => c.Name)
-                .Select(c => new DropdownOption { Id = c.Id, Label = c.Name })
-                .ToListAsync();
-
-        private async Task<List<DropdownOption>> GetCourseCodeOptionsAsync() =>
-            await _context.CourseCodes
-                .Where(c => c.IsActive)
-                .OrderBy(c => c.Code)
-                .Select(c => new DropdownOption
-                {
-                    Id = c.Id,
-                    Label = $"{c.Code} – {c.CourseName}"
-                })
-                .ToListAsync();
-
-        private async Task<string> SaveImageAsync(IFormFile file)
-        {
-            var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", "listings");
-            Directory.CreateDirectory(uploadsFolder);
-
-            var uniqueName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
-            var filePath = Path.Combine(uploadsFolder, uniqueName);
-
-            await using var stream = new FileStream(filePath, FileMode.Create);
-            await file.CopyToAsync(stream);
-
-            return $"/uploads/listings/{uniqueName}";
-        }
-
-        private void DeleteImage(string? imagePath)
-        {
-            if (string.IsNullOrEmpty(imagePath)) return;
-            var fullPath = Path.Combine(_env.WebRootPath, imagePath.TrimStart('/'));
-            if (System.IO.File.Exists(fullPath))
-                System.IO.File.Delete(fullPath);
         }
     }
 }
