@@ -326,7 +326,7 @@
                                                 Receipt
                                             </a>
                                         }
-                                        @if (t.CanReview)
+                                        @if (t.Status == LiteratureClub.Models.TransactionStatus.Completed && !t.HasReview)
                                         {
                                             <a asp-controller="Reviews" asp-action="Leave"
                                                asp-route-transactionId="@t.Id"
