@@ -298,6 +298,11 @@ namespace LiteratureClub.Controllers
                 return RedirectToAction(nameof(Detail), new { id });
             }
 
+            ModelState.Remove(nameof(vm.Categories));
+            ModelState.Remove(nameof(vm.CourseCodes));
+            ModelState.Remove(nameof(vm.ExistingImagePath));
+            ModelState.Remove(nameof(vm.ImageFile));
+
             if (vm.Condition == BookCondition.Used &&
                 string.IsNullOrWhiteSpace(vm.ConditionDescription))
                 ModelState.AddModelError("ConditionDescription",

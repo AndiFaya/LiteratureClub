@@ -15,6 +15,8 @@
 
         <form asp-action="Edit" asp-route-id="@Model.Id"
               method="post" enctype="multipart/form-data">
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="ExistingImagePath" />
             <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
             <h5 class="mb-3 border-bottom pb-2">Book Details</h5>
