@@ -278,6 +278,120 @@ namespace LiteratureClub.Controllers
             return View(vm);
         }
 
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult ForgotPassword()
+        {
+            if (_signInManager.IsSignedIn(User))
+                return RedirectToAction("Index", "Home");
+
+            return View();
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel vm)
+        {
+            if (!ModelState.IsValid)
+                return View(vm);
+
+            try
+            {
+                var user = await _userManager.FindByEmailAsync(vm.Email.Trim());
+
+                if (user != null)
+                {
+                    // 1. Generate the secure token using ASP.NET Core Identity
+                    var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+                    // 2. Build the callback verification link pointing to our ResetPassword GET action
+                    var callbackUrl = Url.Action("ResetPassword", "Account",
+                        new { token, email = user.Email },
+                        protocol: Request.Scheme)!;
+
+                    _logger.LogInformation("Password reset token generated for {Email}", user.Email);
+
+                    // 3. Dispatch the message utilizing your existing EmailService infrastructure
+                    // Note: Update the method name below to match whatever helper method your EmailService exposes
+                    await _email.SendPasswordResetLinkAsync(user, callbackUrl);
+                }
+
+                // Security Best Practice: Always redirect to confirmation even if the email doesn't exist
+                // This prevents malicious actors from scanning which student emails are registered.
+                return RedirectToAction("ForgotPasswordConfirmation");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Forgot password token generation crash for {Email}", vm.Email);
+                ModelState.AddModelError(string.Empty, "A system error occurred. Please try again.");
+            }
+
+            return View(vm);
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult ForgotPasswordConfirmation() => View();
+
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult ResetPassword(string? token = null, string? email = null)
+        {
+            if (token == null || email == null)
+            {
+                _logger.LogWarning("ResetPassword accessed with missing routing tokens.");
+                return RedirectToAction("Login");
+            }
+
+            return View(new ResetPasswordViewModel { Token = token, Email = email });
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(ResetPasswordViewModel vm)
+        {
+            if (!ModelState.IsValid)
+                return View(vm);
+
+            try
+            {
+                var user = await _userManager.FindByEmailAsync(vm.Email.Trim());
+                if (user == null)
+                {
+                    // Redirect silently to prevent account enumeration
+                    return RedirectToAction("ResetPasswordConfirmation");
+                }
+
+                // Identity decodes and verifies the cryptographic token against the database stamp
+                var result = await _userManager.ResetPasswordAsync(user, vm.Token, vm.Password);
+
+                if (result.Succeeded)
+                {
+                    _logger.LogInformation("Password reset successful for user {Email}", user.Email);
+                    TempData["Success"] = "Your password has been reset successfully. Please log in.";
+                    return RedirectToAction("ResetPasswordConfirmation");
+                }
+
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "ResetPassword runtime processing exception for {Email}", vm.Email);
+                ModelState.AddModelError(string.Empty, "An error occurred while resetting your password.");
+            }
+
+            return View(vm);
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult ResetPasswordConfirmation() => View();
+
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]

@@ -85,6 +85,69 @@ namespace LiteratureClub.Services
             return await SendAsync(user.Email!, subject, html, text);
         }
 
+        // Forgot password reset verification link
+        public async Task<bool> SendPasswordResetLinkAsync(
+            ApplicationUser user, string resetLink)
+        {
+            var subject = "Reset your LiteratureClub account password";
+
+            var html = $@"
+<!DOCTYPE html>
+<html>
+<body style='margin:0;padding:0;background:#f4f6f8;font-family:Arial,sans-serif'>
+<table width='100%' cellpadding='0' cellspacing='0'>
+  <tr><td align='center' style='padding:40px 16px'>
+    <table width='520' cellpadding='0' cellspacing='0'
+           style='background:#fff;border-radius:8px;overflow:hidden;
+                  box-shadow:0 2px 8px rgba(0,0,0,.08)'>
+      <tr><td style='background:#0d6efd;padding:28px 32px;text-align:center'>
+        <span style='font-size:32px'>🔐</span>
+        <h1 style='color:#fff;margin:8px 0 0;font-size:22px' class='translate-me'>LiteratureClub</h1>
+      </td></tr>
+      <tr><td style='padding:36px 32px'>
+        <h2 style='margin-top:0;color:#1a1a2e' class='translate-me'>
+          Password Reset Request
+        </h2>
+        <p style='color:#555;line-height:1.6' class='translate-me'>
+          Hi {user.DisplayUsername}, we received a request to reset the password for your LiteratureClub marketplace account. 
+          Click the button below to choose a new password.
+        </p>
+        <div style='text-align:center;margin:32px 0'>
+          <a href='{resetLink}'
+             style='background:#0d6efd;color:#fff;text-decoration:none;
+                    padding:14px 32px;border-radius:6px;font-weight:700;
+                    font-size:16px;display:inline-block' class='translate-me'>
+            Reset My Password
+          </a>
+        </div>
+        <p style='color:#888;font-size:13px;line-height:1.6' class='translate-me'>
+          This recovery link expires in <strong>24 hours</strong>.<br/>
+          If you didn't request a password update, you can safely ignore this security email—your current credentials will remain completely secure.
+        </p>
+        <p style='color:#888;font-size:12px;word-break:break-all'>
+          Or copy this link into your browser:<br/>
+          <a href='{resetLink}' style='color:#0d6efd'>{resetLink}</a>
+        </p>
+      </td></tr>
+      <tr><td style='background:#f8f9fa;padding:20px 32px;text-align:center;
+                     color:#adb5bd;font-size:12px;border-top:1px solid #e9ecef' class='translate-me'>
+        LiteratureClub · Student Textbook Marketplace<br/>
+        somasharelitclub@gmail.com
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>";
+
+            var text = $"LiteratureClub Password Recovery\n\n" +
+                       $"Hi {user.DisplayUsername},\n\n" +
+                       $"Reset your password by visiting this link:\n{resetLink}\n\n" +
+                       $"This security link will expire in 24 hours.";
+
+            return await SendAsync(user.Email!, subject, html, text);
+        }
+
         //Payment confirmed
         public async Task<bool> SendVerificationCodeAsync(Transaction transaction)
         {
