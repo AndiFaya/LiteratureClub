@@ -6,13 +6,13 @@
 <div class="row justify-content-center mt-4">
     <div class="col-md-5 col-lg-4">
 
-        <h2 class="mb-1">Welcome Back</h2>
-        <p class="text-muted mb-4">Sign in to your LiteratureClub account.</p>
+        <h2 class="mb-1 translate-me">Welcome Back</h2>
+        <p class="text-muted mb-4 translate-me">Sign in to your LiteratureClub account.</p>
 
         @if (TempData["Success"] != null)
         {
             <div class="alert alert-success alert-dismissible fade show">
-                @TempData["Success"]
+                <span class="translate-me">@TempData["Success"]</span>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         }
@@ -24,15 +24,15 @@
             <div class="alert alert-danger">
                 @foreach (var error in ViewData.ModelState[string.Empty]!.Errors)
                 {
-                    <div>@error.ErrorMessage</div>
+                    <div class="translate-me">@error.ErrorMessage</div>
                 }
                 @if (ViewData["UnverifiedEmail"] != null)
                 {
                     <hr class="my-2" />
                     <div class="d-flex align-items-center gap-2">
-                        <span class="small">Didn't get the email?</span>
+                        <span class="small translate-me">Didn't get the email?</span>
                         <a asp-action="ResendVerification"
-                               class="btn btn-sm btn-outline-warning">
+                           class="btn btn-sm btn-outline-warning translate-me">
                             Resend verification link
                         </a>
                     </div>
@@ -44,7 +44,7 @@
             @Html.AntiForgeryToken()
 
             <div class="mb-3">
-                <label asp-for="Email" class="form-label">
+                <label asp-for="Email" class="form-label translate-me">
                     University Email <span class="text-danger">*</span>
                 </label>
                 <input asp-for="Email" type="email" class="form-control"
@@ -54,14 +54,17 @@
             </div>
 
             <div class="mb-3">
-                <label asp-for="Password" class="form-label">
-                    Password <span class="text-danger">*</span>
-                </label>
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <label asp-for="Password" class="form-label mb-0 translate-me">
+                        Password <span class="text-danger">*</span>
+                    </label>
+                    <a asp-action="ForgotPassword" class="small text-decoration-none translate-me">Forgot password?</a>
+                </div>
                 <div class="input-group">
                     <input asp-for="Password" type="password" id="loginPassword"
                            class="form-control" placeholder="Your password"
                            autocomplete="current-password" />
-                    <button type="button" class="btn btn-outline-secondary"
+                    <button type="button" class="btn btn-outline-secondary translate-me"
                             id="toggleLoginPassword" tabindex="-1">
                         Show
                     </button>
@@ -71,19 +74,19 @@
 
             <div class="mb-4 form-check">
                 <input asp-for="RememberMe" class="form-check-input" />
-                <label asp-for="RememberMe" class="form-check-label">Keep me signed in</label>
+                <label asp-for="RememberMe" class="form-check-label translate-me">Keep me signed in</label>
             </div>
 
-            <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">Sign In</button>
+            <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold translate-me">Sign In</button>
         </form>
 
         <hr class="my-4" />
         <div class="text-center">
-            <p class="text-muted mb-1">
+            <p class="text-muted mb-1 translate-me">
                 Don't have an account?
                 <a asp-action="Register">Create one here</a>
             </p>
-            <p class="text-muted mb-0 small">
+            <p class="text-muted mb-0 small translate-me">
                 Waiting for your verification email?
                 <a asp-action="ResendVerification">Resend it</a>
             </p>
@@ -101,7 +104,7 @@
             const input = document.getElementById('loginPassword');
             const isText = input.type === 'text';
             input.type = isText ? 'password' : 'text';
-            this.textContent = isText ? 'Show' : 'Hide';
+            this.textContent = isText ? 'Show' : 'Hide'; // Values handled contextually for display toggling
         });
     </script>
 }
